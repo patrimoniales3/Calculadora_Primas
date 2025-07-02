@@ -1,0 +1,177 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+}
+
+.container {
+    width: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+h2 {
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+.section {
+    margin-bottom: 25px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+    font-size: 12px;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.checkbox-group {
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+.result-item span {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 60px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: #555;
+    cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+    margin-right: 8px;
+    width: auto;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:active {
+    background-color: #3d8b40;
+}
+
+.result-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border-left: 3px solid #4CAF50;
+}
+
+.result-item label {
+    font-weight: 500;
+    color: #333;
+    font-size: 12px;
+}
+
+.result-item span {
+    font-weight: 600;
+    color: #2c5530;
+    font-size: 12px;
+    text-align: right;
+}
+
+/* Estilos específicos para diferentes tipos de resultados */
+.result-item:nth-child(7) { /* Prima Total */
+    background-color: #e8f5e8;
+    border-left-color: #2e7d32;
+}
+
+.result-item:nth-child(7) span {
+    color: #1b5e20;
+    font-size: 13px;
+}
+
+/* Scrollbar personalizada */
+.container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
