@@ -106,23 +106,25 @@ function calcular() {
 
     if (tienePrima) {
         if (tipoPrima === 'total') {
-            if (aplicarMinimo) {
-                primaComercial = redondear(valorPrima / 1.18);
+            // Calcular prima comercial y derecho de emisión
+            primaComercial = redondear(valorPrima / 1.18);
+            primaNeta = redondear((primaComercial - redondear(primaComercial / 1.03 * 0.03)));
+            let derechoEmisionCalculado = redondear(primaComercial - primaNeta);
+            if (aplicarMinimo && derechoEmisionCalculado < 5) {
                 derechoEmision = 5;
                 primaNeta = redondear(primaComercial - derechoEmision);
             } else {
-                primaNeta = redondear((valorPrima / 1.03) / 1.18);
-                derechoEmision = redondear(primaNeta * 0.03);
-                primaComercial = redondear(primaNeta + derechoEmision);
+                derechoEmision = derechoEmisionCalculado;
             }
             igv = redondear(primaComercial * 0.18);
             primaTotalCalculada = redondear(primaComercial + igv);
         } else if (tipoPrima === 'neta') {
             primaNeta = valorPrima;
-            if (aplicarMinimo) {
+            let derechoEmisionCalculado = redondear(primaNeta * 0.03);
+            if (aplicarMinimo && derechoEmisionCalculado < 5) {
                 derechoEmision = 5;
             } else {
-                derechoEmision = redondear(primaNeta * 0.03);
+                derechoEmision = derechoEmisionCalculado;
             }
             primaComercial = redondear(primaNeta + derechoEmision);
             igv = redondear(primaComercial * 0.18);
