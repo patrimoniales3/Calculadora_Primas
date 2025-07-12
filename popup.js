@@ -28,7 +28,8 @@ function guardarDatos() {
         sumaAsegurada: document.getElementById('sumaAsegurada').value,
         tipoComision: document.getElementById('tipoComision').value,
         valorComision: document.getElementById('valorComision').value,
-        aplicarMinimo: document.getElementById('aplicarMinimo').checked
+        derechoEmisionMinimo: document.getElementById('derechoEmisionMinimo').value,
+        inputType: document.querySelector('input[name="inputType"]:checked').value
     };
     localStorage.setItem('calculadoraPrimas', JSON.stringify(datos));
 }
@@ -40,7 +41,11 @@ function cargarDatos() {
     if (datos.sumaAsegurada) document.getElementById('sumaAsegurada').value = datos.sumaAsegurada;
     if (datos.tipoComision) document.getElementById('tipoComision').value = datos.tipoComision;
     if (datos.valorComision) document.getElementById('valorComision').value = datos.valorComision;
-    if (typeof datos.aplicarMinimo === 'boolean') document.getElementById('aplicarMinimo').checked = datos.aplicarMinimo;
+    if (datos.derechoEmisionMinimo) document.getElementById('derechoEmisionMinimo').value = datos.derechoEmisionMinimo;
+    if (datos.inputType) {
+        document.querySelector(`input[name="inputType"][value="${datos.inputType}"]`).checked = true;
+        toggleInputVisibility(datos.inputType);
+    }
 }
 
 // Guardar datos en cada cambio de input, select y checkbox
@@ -109,8 +114,9 @@ function calcular() {
             primaComercial = redondear(valorPrima / 1.18);
             let primaNetaCalculada = redondear((valorPrima / 1.03) / 1.18);
             let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
-            if (aplicarMinimo && derechoEmisionCalculado < 5) {
-                derechoEmision = 5;
+            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) || 5;
+            if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                derechoEmision = derechoEmisionMinimo;
                 primaNeta = redondear(primaComercial - derechoEmision);
             } else {
                 derechoEmision = derechoEmisionCalculado;
@@ -122,8 +128,9 @@ function calcular() {
         } else if (tipoPrima === 'neta') {
             primaNeta = valorPrima;
             let derechoEmisionCalculado = redondear(primaNeta * 0.03);
-            if (aplicarMinimo && derechoEmisionCalculado < 5) {
-                derechoEmision = 5;
+            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) || 5;
+            if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                derechoEmision = derechoEmisionMinimo;
             } else {
                 derechoEmision = derechoEmisionCalculado;
             }
@@ -273,6 +280,35 @@ function cambiarTipoComision() {
         calcular();
     }
 }
+
+// Función para alternar la visibilidad de los campos de prima/tasa
+function toggleInputVisibility(type) {
+    const primaInputs = document.querySelector('.prima-inputs');
+    const tasaInputs = document.querySelector('.tasa-inputs');
+    
+    if (type === 'prima') {
+        primaInputs.classList.add('active');
+        tasaInputs.classList.remove('active');
+        // Limpiar y deshabilitar campos de tasa
+        document.getElementById('tipoTasa').value = '';
+        document.getElementById('valorTasa').value = '';
+        document.getElementById('tasaPorMil').checked = false;
+    } else {
+        tasaInputs.classList.add('active');
+        primaInputs.classList.remove('active');
+        // Limpiar y deshabilitar campos de prima
+        document.getElementById('tipoPrima').value = 'total';
+        document.getElementById('valorPrima').value = '';
+    }
+    calcular();
+}
+
+// Agregar event listeners para el toggle de prima/tasa
+document.querySelectorAll('input[name="inputType"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        toggleInputVisibility(e.target.value);
+    });
+});
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {

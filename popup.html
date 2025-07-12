@@ -9,46 +9,59 @@
 <body>
     <div class="container">        
         <div class="section">
-            <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <h2 style="margin:0;font-size:1.1em;color:#2e7d32;">Calculadora de Primas</h2>
-                <button id="btnLimpiar" title="Limpiar datos" style="background:none;border:1px solid #e0e0e0;border-radius:4px;font-size:1.1em;cursor:pointer;padding:2px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">�</button>
-            </div>
-            <div class="input-row">
-                <div class="input-group" style="flex:1;">
-                    <label for="tipoPrima">Tipo de Prima:</label>
-                    <select id="tipoPrima">
-                        <option value="total">Prima Total</option>
-                        <option value="neta">Prima Neta</option>
-                    </select>
-                </div>
-                <div class="input-group" style="flex:1;">
-                    <label for="valorPrima" id="labelPrima">Prima Total:</label>
-                    <input type="text" id="valorPrima" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
-                </div>
-            </div>
-            <div class="input-group">
-            <!-- Sección de tasas -->
-            <div class="input-row">
-                <div class="input-group" style="flex:1;">
-                    <label for="tipoTasa">Tipo de Tasa:</label>
-                    <select id="tipoTasa">
-                        <option value="">Seleccionar</option>
-                        <option value="tasaNeta">Tasa Neta</option>
-                        <option value="tasaComercial">Tasa Comercial</option>
-                    </select>
-                </div>
-                <div class="input-group" style="flex:1;">
-                    <label for="valorTasa" id="labelTasa">Tasa:</label>
-                    <input type="text" id="valorTasa" step="0.0001" placeholder="0.0000" autocomplete="off" inputmode="decimal">
-                </div>
-                <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
-                    <label style="font-size:11px; font-weight:400; margin:0;">
-                        <input type="checkbox" id="tasaPorMil"> (‰)
+            <div class="section-header">
+                <div class="toggle-group">
+                    <label class="toggle-option">
+                        <input type="radio" name="inputType" value="prima" checked>
+                        <span>Prima</span>
+                    </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="inputType" value="tasa">
+                        <span>Tasa</span>
                     </label>
                 </div>
+                <button id="btnLimpiar" title="Limpiar datos" class="btn-icon">🔄</button>
             </div>
-                <label for="sumaAsegurada">Suma Asegurada:</label>
-                <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
+            <div class="prima-inputs active">
+                <div class="input-row">
+                    <div class="input-group" style="flex:1;">
+                        <label for="tipoPrima">Tipo de Prima:</label>
+                        <select id="tipoPrima">
+                            <option value="total">Prima Total</option>
+                            <option value="neta">Prima Neta</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label for="valorPrima" id="labelPrima">Prima Total:</label>
+                        <input type="text" id="valorPrima" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                    </div>
+                </div>
+            </div>
+            <div class="tasa-inputs">
+                <div class="input-row">
+                    <div class="input-group" style="flex:1;">
+                        <label for="tipoTasa">Tipo de Tasa:</label>
+                        <select id="tipoTasa">
+                            <option value="tasaNeta">Tasa Neta</option>
+                            <option value="tasaComercial">Tasa Comercial</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label for="valorTasa" id="labelTasa">Tasa:</label>
+                        <input type="text" id="valorTasa" step="0.0001" placeholder="0.0000" autocomplete="off" inputmode="decimal">
+                    </div>
+                    <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
+                        <label style="font-size:11px; font-weight:400; margin:0;">
+                            <input type="checkbox" id="tasaPorMil"> (‰)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-group" style="flex:1;">
+                    <label for="sumaAsegurada">Suma Asegurada:</label>
+                    <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                </div>
             </div>
             <div class="input-row">
                 <div class="input-group" style="flex:1;">
@@ -63,16 +76,15 @@
                     <input type="number" id="valorComision" step="0.01" placeholder="0.00" autocomplete="off">
                 </div>
             </div>
-            <div class="checkbox-group">
-                <label>
-                    <input type="checkbox" id="aplicarMinimo">
-                    Aplicar Derecho de Emisión minimo (5.00)
-                </label>
+            <div class="input-row">
+                <div class="input-group" style="flex:1;">
+                    <label for="derechoEmisionMinimo">Derecho Emisión Mín.:</label>
+                    <input type="number" id="derechoEmisionMinimo" value="5.00" step="0.01" style="width:100%;" autocomplete="off">
+                </div>
             </div>
         </div>
         
         <div class="section" style="margin-bottom:0;">
-            <h2 style="color:#2e7d32;margin-bottom:12px;font-size:1em;">Resultados Calculados</h2>
             <div class="result-grid">
                 <div class="result-item">
                     <label>Tasa Neta:</label>
