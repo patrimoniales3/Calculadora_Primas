@@ -1,18 +1,18 @@
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: Verdana, Geneva, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f5f5f5;
 }
 
 .container {
-    width: 360px;
-    max-height: 540px;
+    width: 320px;
+    max-height: 500px;
     overflow-y: auto;
-    padding: 16px;
+    padding: 8px 4px;
     background-color: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+    border-radius: 10px;
 }
 
 h1 {
@@ -34,9 +34,9 @@ h2 {
 
 .section {
     background-color: #ffffff;
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border-radius: 7px;
+    padding: 8px 4px 6px;
+    margin-bottom: 10px;
     border: 1px solid #e0e0e0;
 }
 
@@ -55,25 +55,43 @@ h2 {
 }
 
 .input-group label {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 11px;
-    color: #666;
-    font-weight: 500;
+    margin-bottom: 0;
+    font-size: 10px;
+    color: #888;
+    font-weight: 400;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .input-group input,
 .input-group select {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 13px;
+    font-size: 11px;
+    padding: 2px 4px;
+    height: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
     box-sizing: border-box;
-    background-color: #ffffff;
-    transition: all 0.2s ease;
-    height: 32px;
     color: #333;
+    transition: border .15s;
+}
+
+input::-webkit-input-placeholder {
+    font-size: 10px;
+    color: #bbb;
+}
+
+input:-ms-input-placeholder {
+    font-size: 10px;
+    color: #bbb;
+}
+
+input::placeholder {
+    font-size: 10px;
+    color: #bbb;
 }
 
 .input-group select {
@@ -138,11 +156,11 @@ button:active {
 
 .result-grid {
     display: grid;
-    gap: 8px;
+    gap: 4px;
     grid-template-columns: repeat(2, 1fr);
     background: #fafafa;
-    padding: 12px;
-    border-radius: 8px;
+    padding: 6px;
+    border-radius: 6px;
     border: 1px solid #eee;
 }
 
@@ -150,15 +168,16 @@ button:active {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 8px;
-    min-height: 24px;
+    padding: 2px 4px;
+    min-height: 18px;
     background-color: #f8f9fa;
-    border-radius: 4px;
+    border-radius: 3px;
     border: 1px solid #e9ecef;
 }
 
 .result-item:nth-child(7),
-.result-item:nth-child(3) {
+.result-item:nth-child(3),
+.result-item:nth-child(5) {
     grid-column: 1 / -1;
     background-color: #e8f5e9;
     border-color: #c8e6c9;
@@ -188,6 +207,16 @@ button:active {
     font-size: 12px;
 }
 
+.result-item:nth-child(5) { /* Prima Comercial */
+    background-color: #e8f5e8;
+    border-left-color: #2e7d32;
+}
+
+.result-item:nth-child(5) span {
+    color: #1b5e20;
+    font-size: 12px;
+}
+
 /* Scrollbar personalizada */
 .container::-webkit-scrollbar {
     width: 6px;
@@ -210,27 +239,27 @@ button:active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
-    gap: 12px;
+    margin-bottom: 7px;
+    gap: 4px;
     background: #f5f5f5;
-    padding: 3px;
-    border-radius: 8px;
+    padding: 1px 2px;
+    border-radius: 6px;
 }
 
 .btn-icon {
     background: none;
     border: none;
-    font-size: 1.2em;
+    font-size: 1em;
     cursor: pointer;
-    padding: 6px;
-    width: 32px;
-    height: 32px;
+    padding: 2px;
+    width: 22px;
+    height: 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 4px;
     color: #666;
-    transition: all 0.2s ease;
+    transition: background 0.2s, color 0.2s;
 }
 
 .btn-icon:hover {
@@ -243,21 +272,19 @@ button:active {
     display: flex;
     flex: 1;
     background: #e8e8e8;
-    padding: 3px;
+    padding: 2px;
     border-radius: 6px;
-    max-width: 200px;
+    max-width: 140px;
 }
 
 .toggle-option {
     flex: 1;
     text-align: center;
-    font-size: 13px;
+    font-size: 11px;
     cursor: pointer;
-    padding: 6px 16px;
+    padding: 3px 6px;
     color: #666;
-    position: relative;
-    border-radius: 4px;
-    transition: all 0.2s ease;
+    border-radius: 3px;
     user-select: none;
 }
 

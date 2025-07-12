@@ -3,21 +3,19 @@ function redondear(valor) {
     return Math.round(valor * 100) / 100;
 }
 
-// Función para formatear números con formato #,##0.00
+// Función para formatear números con formato #,###.00
 function formatearNumero(numero) {
     return new Intl.NumberFormat('es-PE', {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
+        useGrouping: true
     }).format(numero);
 }
 
-// Función para formatear porcentajes con formato 0.0000%
-function formatearPorcentaje(decimal) {
-    return new Intl.NumberFormat('es-PE', {
-        style: 'percent',
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4
-    }).format(decimal);
+// Función para formatear porcentajes con formato #.####% o ‰
+function formatearPorcentaje(decimal, esPorMil = false) {
+    const valor = esPorMil ? decimal * 1000 : decimal * 100;
+    return valor.toFixed(4) + (esPorMil ? '‰' : '%');
 }
 
 // Guardar y cargar datos en localStorage
@@ -29,7 +27,12 @@ function guardarDatos() {
         tipoComision: document.getElementById('tipoComision').value,
         valorComision: document.getElementById('valorComision').value,
         derechoEmisionMinimo: document.getElementById('derechoEmisionMinimo').value,
-        inputType: document.querySelector('input[name="inputType"]:checked').value
+        inputType: document.querySelector('input[name="inputType"]:checked').value,
+        // Guardar también los datos de tasa
+        tipoTasa: document.getElementById('tipoTasa').value,
+        valorTasa: document.getElementById('valorTasa').value,
+        tasaPorMil: document.getElementById('tasaPorMil').checked,
+        tasaPorMilPrima: document.getElementById('tasaPorMilPrima').checked
     };
     localStorage.setItem('calculadoraPrimas', JSON.stringify(datos));
 }
@@ -42,6 +45,18 @@ function cargarDatos() {
     if (datos.tipoComision) document.getElementById('tipoComision').value = datos.tipoComision;
     if (datos.valorComision) document.getElementById('valorComision').value = datos.valorComision;
     if (datos.derechoEmisionMinimo) document.getElementById('derechoEmisionMinimo').value = datos.derechoEmisionMinimo;
+    // Cargar datos de tasa
+    if (datos.tipoTasa) document.getElementById('tipoTasa').value = datos.tipoTasa;
+    if (datos.valorTasa) document.getElementById('valorTasa').value = datos.valorTasa;
+    if (datos.tasaPorMil !== undefined) document.getElementById('tasaPorMil').checked = datos.tasaPorMil;
+    if (datos.tasaPorMilPrima !== undefined) document.getElementById('tasaPorMilPrima').checked = datos.tasaPorMilPrima;
+    
+    // Guardar el tipo de prima original para mantener coherencia en los cambios
+    if (datos.tipoPrima) {
+        sessionStorage.setItem('tipoPrimaOriginal', datos.tipoPrima);
+    }
+
+    // Aplicar el tipo de entrada al final para asegurar que todos los valores estén cargados
     if (datos.inputType) {
         document.querySelector(`input[name="inputType"][value="${datos.inputType}"]`).checked = true;
         toggleInputVisibility(datos.inputType);
@@ -49,11 +64,17 @@ function cargarDatos() {
 }
 
 // Guardar datos en cada cambio de input, select y checkbox
-['tipoPrima','valorPrima','sumaAsegurada','tipoComision','valorComision','aplicarMinimo'].forEach(id => {
+['tipoPrima','valorPrima','sumaAsegurada','tipoComision','valorComision','tipoTasa','valorTasa','aplicarMinimo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-        el.addEventListener('change', guardarDatos);
-        el.addEventListener('input', guardarDatos);
+        el.addEventListener('change', () => {
+            guardarDatos();
+            calcular();
+        });
+        el.addEventListener('input', () => {
+            guardarDatos();
+            calcular();
+        });
     }
 });
 
@@ -65,7 +86,7 @@ function calcular() {
     const sumaAsegurada = parseFloat((document.getElementById('sumaAsegurada').value || '').replace(/\s/g, '').replace(/,/g, '')) || 0;
     const tipoComision = document.getElementById('tipoComision').value;
     const valorComision = parseFloat((document.getElementById('valorComision').value || '').replace(/\s/g, '').replace(/,/g, '')) || 0;
-    const aplicarMinimo = document.getElementById('aplicarMinimo').checked;
+    const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
 
     // Elementos de resultado
     const tasaNetaEl = document.getElementById('tasaNeta');
@@ -89,15 +110,25 @@ function calcular() {
     labelResultado.textContent = tipoComision === 'porcentaje' ? 'Comisión:' : '% Comisión:';
     spanResultado.textContent = tipoComision === 'porcentaje' ? '0.00 ⚠️' : '0.0000% ⚠️';
 
-    // Si no hay ningún dato, limpiar y mostrar 0 sin advertencia
-    if (!valorPrima && !sumaAsegurada && !valorComision) {
+    // Determinar el modo activo
+    const modoTasa = document.querySelector('.tasa-inputs.active') !== null;
+    const modoPrima = !modoTasa;
+
+    // Determinar si hay valores suficientes para calcular según el modo
+    const valorTasaActual = document.getElementById('valorTasa').value;
+    const tieneValoresTasa = modoTasa && sumaAsegurada && valorTasaActual;
+    const tieneValoresPrima = modoPrima && (valorPrima || sumaAsegurada);
+
+    // En modo prima necesitamos prima o suma asegurada
+    // En modo tasa necesitamos tasa y suma asegurada
+    if ((modoPrima && !tieneValoresPrima) || (modoTasa && (!sumaAsegurada || !valorTasaActual))) {
         tasaNetaEl.textContent = '0.0000%';
         tasaComercialEl.textContent = '0.0000%';
-        primaNetaEl.textContent = '0.00';
-        derechoEmisionEl.textContent = '0.00';
-        primaComercialEl.textContent = '0.00';
-        igvEl.textContent = '0.00';
-        primaTotalCalculadaEl.textContent = '0.00';
+    primaNetaEl.textContent = '0.00';
+    derechoEmisionEl.textContent = '0.00';
+    primaComercialEl.innerHTML = '<strong>0.00</strong>';
+    igvEl.textContent = '0.00';
+    primaTotalCalculadaEl.textContent = '0.00';
         labelResultado.textContent = tipoComision === 'porcentaje' ? 'Comisión:' : '% Comisión:';
         spanResultado.textContent = tipoComision === 'porcentaje' ? '0.00' : '0.00%';
         return;
@@ -105,16 +136,75 @@ function calcular() {
 
     // Cálculos principales
     let primaNeta = 0, derechoEmision = 0, primaComercial = 0, igv = 0, primaTotalCalculada = 0, tasaNeta = 0, tasaComercial = 0, porcentajeComision = 0, montoComision = 0;
-    let tienePrima = !!valorPrima;
     let tieneSuma = !!sumaAsegurada;
     let tieneComision = !!valorComision;
+    
+    // En modo tasa, no necesitamos considerar el valor de la prima
+    let tienePrima = modoPrima && !!valorPrima;
 
-    if (tienePrima) {
+    if (modoTasa && tieneSuma) {
+        // Si estamos en modo tasa, usar solo los cálculos basados en tasa
+        const tipoTasa = document.getElementById('tipoTasa').value;
+        let valorTasaInput = (document.getElementById('valorTasa').value || '').replace(/\s/g, '').replace(/,/g, '').replace('%','').replace('‰','');
+        let valorTasa = parseFloat(valorTasaInput) || 0;
+        const tasaPorMil = document.getElementById('tasaPorMil').checked;
+        let valorTasaDecimal = tasaPorMil ? valorTasa / 1000 : valorTasa / 100;
+
+        if (valorTasa > 0) {
+            let simbolo = tasaPorMil ? '‰' : '%';
+            if (tipoTasa === 'tasaNeta') {
+                tasaNeta = valorTasaDecimal;
+                primaNeta = redondear(tasaNeta * sumaAsegurada);
+                let derechoEmisionCalculado = redondear(primaNeta * 0.03);
+                if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                    derechoEmision = derechoEmisionMinimo;
+                } else {
+                    derechoEmision = derechoEmisionCalculado;
+                }
+                primaComercial = redondear(primaNeta + derechoEmision);
+                tasaComercial = primaComercial / sumaAsegurada;
+                igv = redondear(primaComercial * 0.18);
+                primaTotalCalculada = redondear(primaComercial + igv);
+
+                // Mostrar las tasas
+                tasaNetaEl.textContent = valorTasa.toFixed(4) + simbolo;
+                tasaComercialEl.textContent = (tasaComercial * (tasaPorMil ? 1000 : 100)).toFixed(4) + simbolo;
+            } else if (tipoTasa === 'tasaComercial') {
+                tasaComercial = valorTasaDecimal;
+                primaComercial = redondear(tasaComercial * sumaAsegurada);
+                let primaNetaCalculada = redondear(primaComercial / 1.03);
+                let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
+                if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                    derechoEmision = derechoEmisionMinimo;
+                    primaNeta = redondear(primaComercial - derechoEmision);
+                } else {
+                    derechoEmision = derechoEmisionCalculado;
+                    primaNeta = primaNetaCalculada;
+                }
+                tasaNeta = primaNeta / sumaAsegurada;
+                igv = redondear(primaComercial * 0.18);
+                primaTotalCalculada = redondear(primaComercial + igv);
+
+                // Mostrar las tasas
+                tasaNetaEl.textContent = (tasaNeta * (tasaPorMil ? 1000 : 100)).toFixed(4) + simbolo;
+                tasaComercialEl.textContent = valorTasa.toFixed(4) + simbolo;
+            }
+
+            // Mostrar los resultados
+            const primaNetaFormateada = formatearNumero(primaNeta);
+            const primaComercialFormateada = formatearNumero(primaComercial);
+            primaNetaEl.textContent = primaNetaFormateada;
+            derechoEmisionEl.textContent = formatearNumero(derechoEmision);
+            primaComercialEl.innerHTML = `<strong>${primaComercialFormateada}</strong>`;
+            igvEl.textContent = formatearNumero(igv);
+            primaTotalCalculadaEl.textContent = formatearNumero(primaTotalCalculada);
+        }
+    } else if (tienePrima) {
         if (tipoPrima === 'total') {
             primaComercial = redondear(valorPrima / 1.18);
             let primaNetaCalculada = redondear((valorPrima / 1.03) / 1.18);
             let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
-            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) || 5;
+            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
             if (derechoEmisionCalculado < derechoEmisionMinimo) {
                 derechoEmision = derechoEmisionMinimo;
                 primaNeta = redondear(primaComercial - derechoEmision);
@@ -128,7 +218,7 @@ function calcular() {
         } else if (tipoPrima === 'neta') {
             primaNeta = valorPrima;
             let derechoEmisionCalculado = redondear(primaNeta * 0.03);
-            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) || 5;
+            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
             if (derechoEmisionCalculado < derechoEmisionMinimo) {
                 derechoEmision = derechoEmisionMinimo;
             } else {
@@ -138,24 +228,21 @@ function calcular() {
             igv = redondear(primaComercial * 0.18);
             primaTotalCalculada = redondear(primaComercial + igv);
         }
-        // Mostrar resultados dependientes solo de prima
-        primaNetaEl.textContent = formatearNumero(primaNeta);
+        // Mostrar resultados dependientes solo de prima, resaltando prima comercial junto con neta/total
+        const primaNetaFormateada = formatearNumero(primaNeta);
+        const primaComercialFormateada = formatearNumero(primaComercial);
+        primaNetaEl.textContent = primaNetaFormateada;
         derechoEmisionEl.textContent = formatearNumero(derechoEmision);
-        primaComercialEl.textContent = formatearNumero(primaComercial);
+        primaComercialEl.innerHTML = `<strong>${primaComercialFormateada}</strong>`;
         igvEl.textContent = formatearNumero(igv);
         primaTotalCalculadaEl.textContent = formatearNumero(primaTotalCalculada);
         // Calcular y mostrar tasas si hay suma asegurada
         if (tieneSuma) {
             let tasaNeta = primaNeta / sumaAsegurada;
             let tasaComercial = primaComercial / sumaAsegurada;
-            const esPorMil = document.getElementById('tasaPorMil').checked;
-            if (esPorMil) {
-                tasaNetaEl.textContent = (tasaNeta * 1000).toFixed(4) + '‰';
-                tasaComercialEl.textContent = (tasaComercial * 1000).toFixed(4) + '‰';
-            } else {
-                tasaNetaEl.textContent = (tasaNeta * 100).toFixed(4) + '%';
-                tasaComercialEl.textContent = (tasaComercial * 100).toFixed(4) + '%';
-            }
+            const esPorMil = document.getElementById('tasaPorMilPrima').checked;
+            tasaNetaEl.textContent = formatearPorcentaje(tasaNeta, esPorMil);
+            tasaComercialEl.textContent = formatearPorcentaje(tasaComercial, esPorMil);
         }
     } else {
         // Si no hay prima, pero hay tipo de tasa, valor de tasa y suma asegurada, calcular por tasa
@@ -170,8 +257,9 @@ function calcular() {
                 tasaNeta = valorTasaDecimal;
                 primaNeta = redondear(tasaNeta * sumaAsegurada);
                 let derechoEmisionCalculado = redondear(primaNeta * 0.03);
-                if (aplicarMinimo && derechoEmisionCalculado < 5) {
-                    derechoEmision = 5;
+                const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
+                if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                    derechoEmision = derechoEmisionMinimo;
                 } else {
                     derechoEmision = derechoEmisionCalculado;
                 }
@@ -207,18 +295,13 @@ function calcular() {
             primaTotalCalculadaEl.textContent = formatearNumero(primaTotalCalculada);
         }
     }
-    // Si hay suma asegurada, calcular tasas
-    if (tienePrima && tieneSuma) {
+    // Calcular tasas solo en modo prima y si tenemos los datos necesarios
+    if (modoPrima && tienePrima && tieneSuma) {
         tasaNeta = primaNeta / sumaAsegurada;
         tasaComercial = primaComercial / sumaAsegurada;
-        const esPorMil = document.getElementById('tasaPorMil').checked;
-        if (esPorMil) {
-            tasaNetaEl.textContent = (tasaNeta * 100).toFixed(4) + '‰';
-            tasaComercialEl.textContent = (tasaComercial * 100).toFixed(4) + '‰';
-        } else {
-            tasaNetaEl.textContent = (tasaNeta * 100).toFixed(4) + '%';
-            tasaComercialEl.textContent = (tasaComercial * 100).toFixed(4) + '%';
-        }
+        const esPorMil = document.getElementById('tasaPorMilPrima').checked;
+        tasaNetaEl.textContent = formatearPorcentaje(tasaNeta, esPorMil);
+        tasaComercialEl.textContent = formatearPorcentaje(tasaComercial, esPorMil);
     }
     // Calcular comisión siempre que haya prima neta y valor de comisión
     if (primaNeta && tieneComision) {
@@ -260,25 +343,21 @@ function cambiarTipoComision() {
     const tipoComision = document.getElementById('tipoComision').value;
     const labelComision = document.getElementById('labelComision');
     const inputComision = document.getElementById('valorComision');
+    const labelResultado = document.getElementById('labelResultadoComision');
     
     if (tipoComision === 'porcentaje') {
         labelComision.textContent = '% Comisión:';
         inputComision.placeholder = '0.00';
+        labelResultado.textContent = 'Comisión:';
     } else {
         labelComision.textContent = 'Comisión:';
         inputComision.placeholder = '0.00';
+        labelResultado.textContent = '% Comisión:';
     }
     
     // Limpiar el valor al cambiar el tipo
     inputComision.value = '';
-    
-    // Recalcular si hay datos
-    const primaTotal = parseFloat(document.getElementById('primaTotal').value) || 0;
-    const sumaAsegurada = parseFloat(document.getElementById('sumaAsegurada').value) || 0;
-    
-    if (primaTotal > 0 && sumaAsegurada > 0) {
-        calcular();
-    }
+    calcular();
 }
 
 // Función para alternar la visibilidad de los campos de prima/tasa
@@ -286,20 +365,70 @@ function toggleInputVisibility(type) {
     const primaInputs = document.querySelector('.prima-inputs');
     const tasaInputs = document.querySelector('.tasa-inputs');
     
+    // Guardar el estado actual del checkbox por mil antes del cambio
+    const tasaPorMilActual = document.querySelector('.prima-inputs.active') ? 
+        document.getElementById('tasaPorMilPrima').checked : 
+        document.getElementById('tasaPorMil').checked;
+
     if (type === 'prima') {
+        // Cambiar a prima
         primaInputs.classList.add('active');
         tasaInputs.classList.remove('active');
-        // Limpiar y deshabilitar campos de tasa
-        document.getElementById('tipoTasa').value = '';
-        document.getElementById('valorTasa').value = '';
-        document.getElementById('tasaPorMil').checked = false;
+        
+        // Guardar estado actual de tasa para futura referencia
+        if (document.getElementById('valorTasa').value) {
+            sessionStorage.setItem('ultimaTasa', document.getElementById('valorTasa').value);
+            sessionStorage.setItem('ultimoTipoPorMil', document.getElementById('tasaPorMil').checked);
+            sessionStorage.setItem('ultimoTipoTasa', document.getElementById('tipoTasa').value);
+        }
+
+        // Determinar el tipo de prima y extraer el valor correspondiente
+        const tipoPrimaActual = document.getElementById('tipoPrima').value;
+        const primaTotal = document.getElementById('primaTotalCalculada').textContent;
+        const primaNeta = document.getElementById('primaNeta').textContent;
+
+        if (primaTotal && primaNeta && primaTotal !== '0.00' && primaTotal !== '0.00 ⚠️') {
+            if (tipoPrimaActual === 'total') {
+                document.getElementById('valorPrima').value = primaTotal.replace(/[^\d.,]/g, '');
+            } else {
+                document.getElementById('valorPrima').value = primaNeta.replace(/[^\d.,]/g, '');
+            }
+        }
     } else {
+        // Cambiar a tasa
         tasaInputs.classList.add('active');
         primaInputs.classList.remove('active');
-        // Limpiar y deshabilitar campos de prima
-        document.getElementById('tipoPrima').value = 'total';
-        document.getElementById('valorPrima').value = '';
+
+        // Obtener la tasa actual del resultado
+        const tasaNetaText = document.getElementById('tasaNeta').textContent;
+        const tasaComercialText = document.getElementById('tasaComercial').textContent;
+        
+        if (tasaNetaText && tasaNetaText !== '0.0000%' && tasaNetaText !== '0.0000% ⚠️') {
+            // Extraer solo el valor numérico de la tasa
+            const tasaActual = tasaNetaText.replace(/[^0-9.,]/g, '');
+            if (tasaActual) {
+                document.getElementById('tipoTasa').value = 'tasaNeta';
+                document.getElementById('valorTasa').value = tasaActual;
+            }
+        } else if (sessionStorage.getItem('ultimaTasa')) {
+            // Restaurar la última configuración de tasa usada
+            document.getElementById('valorTasa').value = sessionStorage.getItem('ultimaTasa');
+            document.getElementById('tasaPorMil').checked = sessionStorage.getItem('ultimoTipoPorMil') === 'true';
+            if (sessionStorage.getItem('ultimoTipoTasa')) {
+                document.getElementById('tipoTasa').value = sessionStorage.getItem('ultimoTipoTasa');
+            }
+        } else {
+            // Si no hay valores previos, establecer valores por defecto
+            document.getElementById('tipoTasa').value = 'tasaNeta';
+            document.getElementById('valorTasa').value = '';
+        }
+
+        // Sincronizar el estado de los checkboxes según el estado guardado
+        document.getElementById('tasaPorMil').checked = tasaPorMilActual;
+        document.getElementById('tasaPorMilPrima').checked = tasaPorMilActual;
     }
+    
+    guardarDatos();
     calcular();
 }
 
@@ -310,123 +439,184 @@ document.querySelectorAll('input[name="inputType"]').forEach(radio => {
     });
 });
 
-// Event listeners
+// Event listener para cuando el documento esté listo
 document.addEventListener('DOMContentLoaded', function() {
+    // Cargar datos guardados
     cargarDatos();
-    // Cambio en el tipo de comisión
-    document.getElementById('tipoComision').addEventListener('change', cambiarTipoComision);
-    // Lógica para bloquear campos según entrada de tasa o prima
-    function toggleInputs() {
-        const tipoTasa = document.getElementById('tipoTasa').value;
-        let valorTasaInput = document.getElementById('valorTasa').value;
-        valorTasaInput = valorTasaInput.replace(/\s/g, '').replace(/,/g, '').replace('%','').replace('‰','');
-        const valorTasa = parseFloat(valorTasaInput);
-        const valorPrima = document.getElementById('valorPrima');
-        const tipoPrima = document.getElementById('tipoPrima');
-        // Si hay tipo de tasa y valor válido, bloquear primas
-        if (tipoTasa && !isNaN(valorTasa) && valorTasa > 0) {
-            valorPrima.disabled = true;
-            tipoPrima.disabled = true;
-        } else {
-            valorPrima.disabled = false;
-            tipoPrima.disabled = false;
+    
+    // Event listener para los checkboxes de tasa por mil y sincronización
+    ['tasaPorMil', 'tasaPorMilPrima'].forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) {
+            checkbox.addEventListener('change', function(e) {
+                // Sincronizar el estado del otro checkbox
+                if (id === 'tasaPorMil') {
+                    document.getElementById('tasaPorMilPrima').checked = e.target.checked;
+                } else {
+                    document.getElementById('tasaPorMil').checked = e.target.checked;
+                }
+                guardarDatos();
+                calcular();
+            });
         }
-        // Si hay prima, bloquear tasas
-        if (valorPrima.value) {
-            document.getElementById('tipoTasa').disabled = true;
-            document.getElementById('valorTasa').disabled = true;
-            document.getElementById('tasaPorMil').disabled = true;
-        } else {
-            document.getElementById('tipoTasa').disabled = false;
-            document.getElementById('valorTasa').disabled = false;
-            document.getElementById('tasaPorMil').disabled = false;
-        }
-    }
+    });
 
-    // Listeners para bloquear/desbloquear
-    document.getElementById('tipoTasa').addEventListener('change', function() { toggleInputs(); calcular(); });
-    document.getElementById('valorTasa').addEventListener('input', function() { toggleInputs(); calcular(); });
-    document.getElementById('valorPrima').addEventListener('input', function() { toggleInputs(); calcular(); });
-    document.getElementById('tipoPrima').addEventListener('change', function() { toggleInputs(); calcular(); });
-    document.getElementById('tasaPorMil').addEventListener('change', function() { calcular(); });
-
-    // Formatear el valor de tasa al salir del input
-    document.getElementById('valorTasa').addEventListener('blur', function(e) {
-        let val = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-        val = parseFloat(val);
-        if (!isNaN(val)) {
-            // Mostrar siempre 4 decimales
-            let formatted = val.toFixed(4);
-            // Mostrar símbolo según el checkbox
-            if (document.getElementById('tasaPorMil').checked) {
-                e.target.value = formatted + '‰';
-            } else {
-                e.target.value = formatted + '%';
+    // Event listeners para el campo de tasa y tipo de tasa
+    const valorTasaInput = document.getElementById('valorTasa');
+    if (valorTasaInput) {
+        let valorAnteriorTasa = '';
+        
+        valorTasaInput.addEventListener('input', function(e) {
+            let valor = e.target.value;
+            
+            // Si se está borrando o el valor es vacío, permitirlo
+            if (valor === '' || valor.length < valorAnteriorTasa.length) {
+                valorAnteriorTasa = valor;
+                guardarDatos();
+                calcular();
+                return;
             }
-        } else {
-            e.target.value = '';
-        }
-    });
-
-    // Al enfocar, quitar el símbolo para permitir editar
-    document.getElementById('valorTasa').addEventListener('focus', function(e) {
-        e.target.value = e.target.value.replace('%','').replace('‰','').trim();
-    });
-
-    // Cambio en el tipo de prima
-    document.getElementById('tipoPrima').addEventListener('change', function() {
-        const tipoPrima = document.getElementById('tipoPrima').value;
-        const labelPrima = document.getElementById('labelPrima');
-        if (tipoPrima === 'total') {
-            labelPrima.textContent = 'Prima Total:';
-        } else {
-            labelPrima.textContent = 'Prima Neta:';
-        }
-        document.getElementById('valorPrima').value = '';
-        calcular();
-    });
-
-    // Recalcular automáticamente cuando cambian los valores
-    const inputs = ['valorPrima', 'sumaAsegurada', 'valorComision'];
-    inputs.forEach(id => {
-        document.getElementById(id).addEventListener('input', function() {
+            
+            // Limpiar el valor de todo excepto números, punto y coma
+            valor = valor.replace(/[^\d.,]/g, '');
+            
+            // Si hay más de un separador decimal, mantener solo el primero
+            let contadorDecimal = 0;
+            valor = valor.replace(/[.,]/g, function(match) {
+                contadorDecimal++;
+                return contadorDecimal === 1 ? '.' : '';
+            });
+            
+            // Si es un número válido, actualizar
+            if (/^\d*\.?\d*$/.test(valor)) {
+                e.target.value = valor;
+                valorAnteriorTasa = valor;
+            } else {
+                e.target.value = valorAnteriorTasa;
+            }
+            
+            guardarDatos();
             calcular();
         });
-        document.getElementById(id).addEventListener('blur', function(e) {
-            // Para type="text": mostrar el valor con separador de miles y dos decimales
-            let val = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-            val = parseFloat(val);
-            if (!isNaN(val)) {
-                if (id === 'valorComision' && document.getElementById('tipoComision').value === 'porcentaje') {
-                    e.target.value = val.toFixed(2);
-                } else if (id === 'valorPrima' || id === 'sumaAsegurada') {
-                    e.target.value = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+
+        valorTasaInput.addEventListener('blur', function(e) {
+            const valor = e.target.value;
+            if (valor) {
+                const numero = parseFloat(valor.replace(',', '.'));
+                if (!isNaN(numero)) {
+                    e.target.value = numero.toFixed(4);
+                    valorAnteriorTasa = e.target.value;
                 } else {
-                    e.target.value = val.toFixed(2);
+                    e.target.value = '';
+                    valorAnteriorTasa = '';
                 }
-            } else {
-                e.target.value = '';
+            }
+            calcular();
+        });
+
+        valorTasaInput.addEventListener('focus', function(e) {
+            const valor = e.target.value;
+            if (valor) {
+                let limpio = valor.replace(/[%‰]/g, '');
+                e.target.value = limpio;
+                valorAnteriorTasa = limpio;
             }
         });
+    }
+
+    // Event listener para el tipo de tasa
+    const tipoTasaSelect = document.getElementById('tipoTasa');
+    if (tipoTasaSelect) {
+        tipoTasaSelect.addEventListener('change', calcular);
+    }
+
+    // Event listeners para los campos numéricos
+    ['valorPrima', 'sumaAsegurada', 'valorComision', 'derechoEmisionMinimo'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            let valorAnterior = '';
+            
+            input.addEventListener('input', function(e) {
+                let valor = e.target.value;
+                
+                // Si se está borrando o el valor es vacío, permitirlo
+                if (valor === '' || valor.length < valorAnterior.length) {
+                    valorAnterior = valor;
+                    guardarDatos();
+                    calcular();
+                    return;
+                }
+                
+                // Limpiar el valor de todo excepto números, punto y coma
+                valor = valor.replace(/[^\d.,]/g, '');
+                
+                // Si hay más de un separador decimal, mantener solo el primero
+                let contadorDecimal = 0;
+                valor = valor.replace(/[.,]/g, function(match) {
+                    contadorDecimal++;
+                    return contadorDecimal === 1 ? '.' : '';
+                });
+                
+                // Si es un número válido, actualizar
+                if (/^\d*\.?\d*$/.test(valor)) {
+                    e.target.value = valor;
+                    valorAnterior = valor;
+                } else {
+                    e.target.value = valorAnterior;
+                }
+                
+                guardarDatos();
+                calcular();
+            });
+
+            input.addEventListener('blur', function(e) {
+                const valor = e.target.value;
+                if (valor) {
+                    const numero = parseFloat(valor.replace(',', '.'));
+                    if (!isNaN(numero)) {
+                        e.target.value = formatearNumero(numero);
+                        valorAnterior = e.target.value;
+                    } else {
+                        e.target.value = '';
+                        valorAnterior = '';
+                    }
+                }
+                calcular();
+            });
+
+            input.addEventListener('focus', function(e) {
+                const valor = e.target.value;
+                if (valor) {
+                    // Mantener el número con sus decimales pero sin formato
+                    let limpio = valor.replace(/,/g, '');
+                    e.target.value = limpio;
+                    valorAnterior = limpio;
+                }
+            });
+        }
     });
 
-    // Recalcular cuando cambia el checkbox
-    document.getElementById('aplicarMinimo').addEventListener('change', function() {
-        calcular();
-    });
-
-    // Calcular al cargar
-    calcular();
-
-    // Limpiar campos
+    // Botón limpiar
     document.getElementById('btnLimpiar').addEventListener('click', function() {
         document.getElementById('tipoPrima').value = 'total';
         document.getElementById('valorPrima').value = '';
         document.getElementById('sumaAsegurada').value = '';
         document.getElementById('tipoComision').value = 'monto';
         document.getElementById('valorComision').value = '';
-        document.getElementById('aplicarMinimo').checked = false;
+        document.getElementById('tipoTasa').value = 'tasaNeta';
+        document.getElementById('valorTasa').value = '';
+        document.getElementById('tasaPorMil').checked = false;
+        document.getElementById('tasaPorMilPrima').checked = false;
+        document.getElementById('derechoEmisionMinimo').value = '0.00';
+        // Mantener el toggle actual
+        const currentToggle = document.querySelector('input[name="inputType"]:checked').value;
+        calcular();
         guardarDatos();
-        if (typeof calcular === 'function') calcular();
     });
+
+    // Cambio en el tipo de comisión
+    document.getElementById('tipoComision').addEventListener('change', cambiarTipoComision);
+    
+    // Calcular al cargar
+    calcular();
 });
