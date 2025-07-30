@@ -32,7 +32,8 @@ function guardarDatos() {
         tipoTasa: document.getElementById('tipoTasa').value,
         valorTasa: document.getElementById('valorTasa').value,
         tasaPorMil: document.getElementById('tasaPorMil').checked,
-        tasaPorMilPrima: document.getElementById('tasaPorMilPrima').checked
+        tasaPorMilPrima: document.getElementById('tasaPorMilPrima').checked,
+        tasaDerechoEmision: document.getElementById('tasaDerechoEmision').value // <-- guardar
     };
     localStorage.setItem('calculadoraPrimas', JSON.stringify(datos));
 }
@@ -45,6 +46,7 @@ function cargarDatos() {
     if (datos.tipoComision) document.getElementById('tipoComision').value = datos.tipoComision;
     if (datos.valorComision) document.getElementById('valorComision').value = datos.valorComision;
     if (datos.derechoEmisionMinimo) document.getElementById('derechoEmisionMinimo').value = datos.derechoEmisionMinimo;
+    if (datos.tasaDerechoEmision) document.getElementById('tasaDerechoEmision').value = datos.tasaDerechoEmision; // <-- restaurar
     // Cargar datos de tasa
     if (datos.tipoTasa) document.getElementById('tipoTasa').value = datos.tipoTasa;
     if (datos.valorTasa) document.getElementById('valorTasa').value = datos.valorTasa;
@@ -626,6 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('tasaPorMil').checked = false;
         document.getElementById('tasaPorMilPrima').checked = false;
         document.getElementById('derechoEmisionMinimo').value = '0.00';
+        document.getElementById('tasaDerechoEmision').value = '0.03'; // <-- restablecer a 3%
         // Mantener el toggle actual
         const currentToggle = document.querySelector('input[name="inputType"]:checked').value;
         calcular();
