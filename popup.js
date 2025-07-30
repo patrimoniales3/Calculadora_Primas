@@ -78,15 +78,27 @@ function cargarDatos() {
     }
 });
 
+// Eliminar comas de miles y dejar solo el punto decimal
+function limpiarNumero(valor) {
+    valor = valor.replace(/\s/g, '').replace(/,/g, '');
+    const partes = valor.split('.');
+    if (partes.length > 2) {
+        valor = partes.slice(0, -1).join('') + '.' + partes[partes.length - 1];
+    }
+    return valor;
+}
+
 // Función principal de cálculo
 function calcular() {
     // Obtener tipo de prima y valor
     const tipoPrima = document.getElementById('tipoPrima').value;
-    const valorPrima = parseFloat((document.getElementById('valorPrima').value || '').replace(/\s/g, '').replace(/,/g, '')) || 0;
-    const sumaAsegurada = parseFloat((document.getElementById('sumaAsegurada').value || '').replace(/\s/g, '').replace(/,/g, '')) || 0;
+    const valorPrima = parseFloat(limpiarNumero(document.getElementById('valorPrima').value || '')) || 0;
+    const sumaAsegurada = parseFloat(limpiarNumero(document.getElementById('sumaAsegurada').value || '')) || 0;
     const tipoComision = document.getElementById('tipoComision').value;
-    const valorComision = parseFloat((document.getElementById('valorComision').value || '').replace(/\s/g, '').replace(/,/g, '')) || 0;
-    const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
+    const valorComision = parseFloat(limpiarNumero(document.getElementById('valorComision').value || '')) || 0;
+    const derechoEmisionMinimo = parseFloat(limpiarNumero(document.getElementById('derechoEmisionMinimo').value)) ?? 0;
+    // Obtener la tasa de derecho de emisión seleccionada
+    const tasaDerechoEmision = parseFloat(document.getElementById('tasaDerechoEmision').value) || 0.03;
 
     // Elementos de resultado
     const tasaNetaEl = document.getElementById('tasaNeta');
@@ -155,7 +167,7 @@ function calcular() {
             if (tipoTasa === 'tasaNeta') {
                 tasaNeta = valorTasaDecimal;
                 primaNeta = redondear(tasaNeta * sumaAsegurada);
-                let derechoEmisionCalculado = redondear(primaNeta * 0.03);
+                let derechoEmisionCalculado = redondear(primaNeta * tasaDerechoEmision);
                 if (derechoEmisionCalculado < derechoEmisionMinimo) {
                     derechoEmision = derechoEmisionMinimo;
                 } else {
@@ -172,8 +184,8 @@ function calcular() {
             } else if (tipoTasa === 'tasaComercial') {
                 tasaComercial = valorTasaDecimal;
                 primaComercial = redondear(tasaComercial * sumaAsegurada);
-                let primaNetaCalculada = redondear(primaComercial / 1.03);
-                let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
+                let primaNetaCalculada = redondear(primaComercial / (1 + tasaDerechoEmision));
+                let derechoEmisionCalculado = redondear(primaNetaCalculada * tasaDerechoEmision);
                 if (derechoEmisionCalculado < derechoEmisionMinimo) {
                     derechoEmision = derechoEmisionMinimo;
                     primaNeta = redondear(primaComercial - derechoEmision);
@@ -202,8 +214,9 @@ function calcular() {
     } else if (tienePrima) {
         if (tipoPrima === 'total') {
             primaComercial = redondear(valorPrima / 1.18);
-            let primaNetaCalculada = redondear((valorPrima / 1.03) / 1.18);
-            let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
+            // Prima neta = Prima total / ((1 + tasaDerechoEmision) * 1.18)
+            let primaNetaCalculada = redondear(valorPrima / ((1 + tasaDerechoEmision) * 1.18));
+            let derechoEmisionCalculado = redondear(primaNetaCalculada * tasaDerechoEmision);
             const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
             if (derechoEmisionCalculado < derechoEmisionMinimo) {
                 derechoEmision = derechoEmisionMinimo;
@@ -217,7 +230,7 @@ function calcular() {
             primaTotalCalculada = redondear(primaComercial + igv);
         } else if (tipoPrima === 'neta') {
             primaNeta = valorPrima;
-            let derechoEmisionCalculado = redondear(primaNeta * 0.03);
+            let derechoEmisionCalculado = redondear(primaNeta * tasaDerechoEmision);
             const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
             if (derechoEmisionCalculado < derechoEmisionMinimo) {
                 derechoEmision = derechoEmisionMinimo;
@@ -256,7 +269,7 @@ function calcular() {
             if (tipoTasa === 'tasaNeta') {
                 tasaNeta = valorTasaDecimal;
                 primaNeta = redondear(tasaNeta * sumaAsegurada);
-                let derechoEmisionCalculado = redondear(primaNeta * 0.03);
+                let derechoEmisionCalculado = redondear(primaNeta * tasaDerechoEmision);
                 const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
                 if (derechoEmisionCalculado < derechoEmisionMinimo) {
                     derechoEmision = derechoEmisionMinimo;
@@ -273,8 +286,8 @@ function calcular() {
             } else if (tipoTasa === 'tasaComercial') {
                 tasaComercial = valorTasaDecimal;
                 primaComercial = redondear(tasaComercial * sumaAsegurada);
-                let primaNetaCalculada = redondear(primaComercial / 1.03);
-                let derechoEmisionCalculado = redondear(primaNetaCalculada * 0.03);
+                let primaNetaCalculada = redondear(primaComercial / (1 + tasaDerechoEmision));
+                let derechoEmisionCalculado = redondear(primaNetaCalculada * tasaDerechoEmision);
                 if (aplicarMinimo && derechoEmisionCalculado < 5) {
                     derechoEmision = 5;
                 } else {
@@ -530,15 +543,25 @@ document.addEventListener('DOMContentLoaded', function() {
         tipoTasaSelect.addEventListener('change', calcular);
     }
 
+    // Event listener para la tasa de derecho de emisión
+    const tasaDerechoEmisionSelect = document.getElementById('tasaDerechoEmision');
+    if (tasaDerechoEmisionSelect) {
+        tasaDerechoEmisionSelect.addEventListener('change', function() {
+            calcular();
+            guardarDatos();
+        });
+    }
+
     // Event listeners para los campos numéricos
     ['valorPrima', 'sumaAsegurada', 'valorComision', 'derechoEmisionMinimo'].forEach(id => {
         const input = document.getElementById(id);
         if (input) {
             let valorAnterior = '';
-            
+
             input.addEventListener('input', function(e) {
                 let valor = e.target.value;
-                
+                // Eliminar comas de miles al escribir o pegar
+                valor = valor.replace(/,/g, '');
                 // Si se está borrando o el valor es vacío, permitirlo
                 if (valor === '' || valor.length < valorAnterior.length) {
                     valorAnterior = valor;
@@ -546,17 +569,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     calcular();
                     return;
                 }
-                
-                // Limpiar el valor de todo excepto números, punto y coma
-                valor = valor.replace(/[^\d.,]/g, '');
-                
-                // Si hay más de un separador decimal, mantener solo el primero
-                let contadorDecimal = 0;
-                valor = valor.replace(/[.,]/g, function(match) {
-                    contadorDecimal++;
-                    return contadorDecimal === 1 ? '.' : '';
-                });
-                
+                // Limpiar el valor de todo excepto números y punto decimal
+                valor = valor.replace(/[^\d.]/g, '');
+                // Si hay más de un punto, mantener solo el último como decimal
+                const partes = valor.split('.');
+                if (partes.length > 2) {
+                    valor = partes.slice(0, -1).join('') + '.' + partes[partes.length - 1];
+                }
                 // Si es un número válido, actualizar
                 if (/^\d*\.?\d*$/.test(valor)) {
                     e.target.value = valor;
@@ -564,15 +583,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     e.target.value = valorAnterior;
                 }
-                
                 guardarDatos();
                 calcular();
             });
 
             input.addEventListener('blur', function(e) {
-                const valor = e.target.value;
+                const valor = e.target.value.replace(/,/g, '');
                 if (valor) {
-                    const numero = parseFloat(valor.replace(',', '.'));
+                    const numero = parseFloat(valor);
                     if (!isNaN(numero)) {
                         e.target.value = formatearNumero(numero);
                         valorAnterior = e.target.value;
