@@ -632,8 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
         guardarDatos();
     });
 
-    // Cambio en el tipo de comisión
     document.getElementById('tipoComision').addEventListener('change', cambiarTipoComision);
+    // Cambio en el tipo de comisión
     
     // Calcular al cargar
     calcular();
