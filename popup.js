@@ -230,6 +230,22 @@ function calcular() {
             primaComercial = redondear(primaNeta + derechoEmision);
             igv = redondear(primaComercial * 0.18);
             primaTotalCalculada = redondear(primaComercial + igv);
+        } else if (tipoPrima === 'comercial') {
+            // Si el usuario ingresa la Prima Comercial directamente
+            primaComercial = valorPrima;
+            // Prima neta = prima comercial - derecho de emisión (o mínimo)
+            let derechoEmisionCalculado = redondear(primaComercial - (primaComercial / (1 + tasaDerechoEmision))); // calcular sobre la base neta aproximada
+            console.log(derechoEmisionCalculado);
+            const derechoEmisionMinimo = parseFloat(document.getElementById('derechoEmisionMinimo').value) ?? 0;
+            if (derechoEmisionCalculado < derechoEmisionMinimo) {
+                derechoEmision = derechoEmisionMinimo;
+                primaNeta = redondear(primaComercial - derechoEmision);
+            } else {
+                derechoEmision = derechoEmisionCalculado;
+                primaNeta = redondear(primaComercial - derechoEmision);
+            }
+            igv = redondear(primaComercial * 0.18);
+            primaTotalCalculada = redondear(primaComercial + igv);
         } else if (tipoPrima === 'neta') {
             primaNeta = valorPrima;
             let derechoEmisionCalculado = redondear(primaNeta * tasaDerechoEmision);
@@ -398,15 +414,18 @@ function toggleInputVisibility(type) {
         }
 
         // Determinar el tipo de prima y extraer el valor correspondiente
-        const tipoPrimaActual = document.getElementById('tipoPrima').value;
+    const tipoPrimaActual = document.getElementById('tipoPrima').value;
         const primaTotal = document.getElementById('primaTotalCalculada').textContent;
         const primaNeta = document.getElementById('primaNeta').textContent;
+    const primaComercial = document.getElementById('primaComercial').textContent;
 
         if (primaTotal && primaNeta && primaTotal !== '0.00' && primaTotal !== '0.00 ⚠️') {
             if (tipoPrimaActual === 'total') {
                 document.getElementById('valorPrima').value = primaTotal.replace(/[^\d.,]/g, '');
-            } else {
+            } else if (tipoPrimaActual === 'neta') {
                 document.getElementById('valorPrima').value = primaNeta.replace(/[^\d.,]/g, '');
+            } else if (tipoPrimaActual === 'comercial') {
+                document.getElementById('valorPrima').value = primaComercial.replace(/[^\d.,]/g, '');
             }
         }
     } else {
