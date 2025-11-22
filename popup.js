@@ -46,10 +46,10 @@ function cargarDatos() {
     if (datos.tipoComision) document.getElementById('tipoComision').value = datos.tipoComision;
     if (datos.valorComision) document.getElementById('valorComision').value = datos.valorComision;
     if (datos.derechoEmisionMinimo) document.getElementById('derechoEmisionMinimo').value = datos.derechoEmisionMinimo;
-    if (datos.tasaDerechoEmision) document.getElementById('tasaDerechoEmision').value = datos.tasaDerechoEmision; // <-- restaurar
+    if (datos.tasaDerechoEmision !== undefined) document.getElementById('tasaDerechoEmision').value = datos.tasaDerechoEmision; // <-- restaurar
     // Cargar datos de tasa
     if (datos.tipoTasa) document.getElementById('tipoTasa').value = datos.tipoTasa;
-    if (datos.valorTasa) document.getElementById('valorTasa').value = datos.valorTasa;
+    if (datos.valorTasa !== undefined) document.getElementById('valorTasa').value = datos.valorTasa;
     if (datos.tasaPorMil !== undefined) document.getElementById('tasaPorMil').checked = datos.tasaPorMil;
     if (datos.tasaPorMilPrima !== undefined) document.getElementById('tasaPorMilPrima').checked = datos.tasaPorMilPrima;
     
@@ -100,7 +100,8 @@ function calcular() {
     const valorComision = parseFloat(limpiarNumero(document.getElementById('valorComision').value || '')) || 0;
     const derechoEmisionMinimo = parseFloat(limpiarNumero(document.getElementById('derechoEmisionMinimo').value)) ?? 0;
     // Obtener la tasa de derecho de emisión seleccionada
-    const tasaDerechoEmision = parseFloat(document.getElementById('tasaDerechoEmision').value) || 0.03;
+    const tasaDerechoEmisionValue = parseFloat(document.getElementById('tasaDerechoEmision').value);
+    const tasaDerechoEmision = !isNaN(tasaDerechoEmisionValue) ? tasaDerechoEmisionValue : 0.03;
 
     // Elementos de resultado
     const tasaNetaEl = document.getElementById('tasaNeta');
@@ -436,6 +437,7 @@ function toggleInputVisibility(type) {
         // Obtener la tasa actual del resultado
         const tasaNetaText = document.getElementById('tasaNeta').textContent;
         const tasaComercialText = document.getElementById('tasaComercial').textContent;
+        const valorTasaActual = document.getElementById('valorTasa').value;
         
         if (tasaNetaText && tasaNetaText !== '0.0000%' && tasaNetaText !== '0.0000% ⚠️') {
             // Extraer solo el valor numérico de la tasa
@@ -451,8 +453,8 @@ function toggleInputVisibility(type) {
             if (sessionStorage.getItem('ultimoTipoTasa')) {
                 document.getElementById('tipoTasa').value = sessionStorage.getItem('ultimoTipoTasa');
             }
-        } else {
-            // Si no hay valores previos, establecer valores por defecto
+        } else if (!valorTasaActual) {
+            // Si no hay valores previos Y el campo está vacío, establecer valores por defecto
             document.getElementById('tipoTasa').value = 'tasaNeta';
             document.getElementById('valorTasa').value = '';
         }
@@ -545,6 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     valorAnteriorTasa = '';
                 }
             }
+            guardarDatos();
             calcular();
         });
 
@@ -592,11 +595,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 // Limpiar el valor de todo excepto números y punto decimal
                 valor = valor.replace(/[^\d.]/g, '');
-                // Si hay más de un punto, mantener solo el último como decimal
-                const partes = valor.split('.');
-                if (partes.length > 2) {
-                    valor = partes.slice(0, -1).join('') + '.' + partes[partes.length - 1];
-                }
+                // Si hay más de un punto, mantener solo el primero como decimal
+                let contadorDecimal = 0;
+                valor = valor.replace(/\./g, function(match) {
+                    contadorDecimal++;
+                    return contadorDecimal === 1 ? '.' : '';
+                });
                 // Si es un número válido, actualizar
                 if (/^\d*\.?\d*$/.test(valor)) {
                     e.target.value = valor;

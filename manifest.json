@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Calculadora de Primas y Comisiones",
-  "version": "1.1",
+  "name": "Calculadora de Seguros",
+  "version": "1.2",
   "description": "Calculadora especializada para primas, tasas y comisiones de seguros",
   "action": {
     "default_popup": "popup.html",
