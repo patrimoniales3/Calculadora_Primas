@@ -12,6 +12,11 @@ const Utils = {
         const factor = Math.pow(10, decimales);
         return Math.round((valor + Number.EPSILON) * factor) / factor;
     },
+    // Constantes de precisión
+    PRECISION_MONTO: 6,
+    PRECISION_TASA: 8,
+    PRESENTACION_MONTO: 2,
+    PRESENTACION_TASA: 4,
 
     formatearNumero: (numero) => {
         return new Intl.NumberFormat('es-PE', {
@@ -291,86 +296,83 @@ class CalculatorEngine {
         const tieneSuma = sumaAsegurada > 0;
 
         if (activeTab === 'prima') {
-            if (valorPrima > 0 || sumaAsegurada > 0) { // Permitir calculo parcial si hay logica
+            if (valorPrima > 0 || sumaAsegurada > 0) {
                 res.isValid = true;
 
                 if (tipoPrima === 'total') {
-                    res.primaComercial = Utils.redondear(valorPrima / 1.18);
-                    // Prima neta = Prima total / ((1 + tasaDerechoEmision) * 1.18)
-                    let pnApprox = Utils.redondear(valorPrima / ((1 + tasaDerechoEmision) * 1.18));
-                    let deCalc = Utils.redondear(pnApprox * tasaDerechoEmision);
+                    // Cálculo desde Total: Asegurar que componentes sumen exactamente el total
+                    res.primaTotal = valorPrima;
+                    res.primaComercial = Utils.redondear(res.primaTotal / 1.18, Utils.PRECISION_MONTO);
+                    res.igv = Utils.redondear(res.primaTotal - res.primaComercial, Utils.PRECISION_MONTO);
+
+                    // Cálculo de Prima Neta y Derecho de Emisión
+                    let pnApprox = Utils.redondear(res.primaComercial / (1 + tasaDerechoEmision), Utils.PRECISION_MONTO);
+                    let deCalc = Utils.redondear(pnApprox * tasaDerechoEmision, Utils.PRECISION_MONTO);
 
                     if (deCalc < derechoEmisionMinimo) {
                         res.derechoEmision = derechoEmisionMinimo;
-                        res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision);
+                        res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision, Utils.PRECISION_MONTO);
                     } else {
                         res.derechoEmision = deCalc;
                         res.primaNeta = pnApprox;
                     }
-                    // Recalcular comercial exacto por redondeos
-                    res.primaComercial = Utils.redondear(res.primaNeta + res.derechoEmision);
-
                 } else if (tipoPrima === 'comercial') {
                     res.primaComercial = valorPrima;
-                    // Base neta aprox
-                    let deCalc = Utils.redondear(res.primaComercial - (res.primaComercial / (1 + tasaDerechoEmision)));
+                    res.igv = Utils.redondear(res.primaComercial * 0.18, Utils.PRECISION_MONTO);
+                    res.primaTotal = Utils.redondear(res.primaComercial + res.igv, Utils.PRECISION_MONTO);
+
+                    let pnApprox = Utils.redondear(res.primaComercial / (1 + tasaDerechoEmision), Utils.PRECISION_MONTO);
+                    let deCalc = Utils.redondear(pnApprox * tasaDerechoEmision, Utils.PRECISION_MONTO);
 
                     if (deCalc < derechoEmisionMinimo) {
                         res.derechoEmision = derechoEmisionMinimo;
+                        res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision, Utils.PRECISION_MONTO);
                     } else {
                         res.derechoEmision = deCalc;
+                        res.primaNeta = pnApprox;
                     }
-                    res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision);
-
                 } else if (tipoPrima === 'neta') {
                     res.primaNeta = valorPrima;
-                    let deCalc = Utils.redondear(res.primaNeta * tasaDerechoEmision);
+                    let deCalc = Utils.redondear(res.primaNeta * tasaDerechoEmision, Utils.PRECISION_MONTO);
                     res.derechoEmision = (deCalc < derechoEmisionMinimo) ? derechoEmisionMinimo : deCalc;
-                    res.primaComercial = Utils.redondear(res.primaNeta + res.derechoEmision);
+                    res.primaComercial = Utils.redondear(res.primaNeta + res.derechoEmision, Utils.PRECISION_MONTO);
+                    res.igv = Utils.redondear(res.primaComercial * 0.18, Utils.PRECISION_MONTO);
+                    res.primaTotal = Utils.redondear(res.primaComercial + res.igv, Utils.PRECISION_MONTO);
                 }
 
-                res.igv = Utils.redondear(res.primaComercial * 0.18);
-                res.primaTotal = Utils.redondear(res.primaComercial + res.igv);
-
-                // Calcular Tasas Implícitas
                 if (tieneSuma) {
                     res.tasaNeta = res.primaNeta / sumaAsegurada;
                     res.tasaComercial = res.primaComercial / sumaAsegurada;
                 }
             }
         } else if (activeTab === 'tasa') {
-            if (valorTasa > 0) { // Allow calc even if Suma is 0 for Rates only
-                res.isValid = true; // Mark as valid for Tasa at least
+            if (valorTasa > 0) {
+                res.isValid = true;
                 let tasaDecimal = tasaPorMil ? valorTasa / 1000 : valorTasa / 100;
 
                 if (tipoTasa === 'tasaNeta') {
                     res.tasaNeta = tasaDecimal;
-                    res.tasaComercial = res.tasaNeta * (1 + tasaDerechoEmision); // Pure rate calc
+                    res.tasaComercial = Utils.redondear(res.tasaNeta * (1 + tasaDerechoEmision), Utils.PRECISION_TASA);
 
                     if (tieneSuma) {
-                        res.primaNeta = Utils.redondear(res.tasaNeta * sumaAsegurada);
-                        let deCalc = Utils.redondear(res.primaNeta * tasaDerechoEmision);
+                        res.primaNeta = Utils.redondear(res.tasaNeta * sumaAsegurada, Utils.PRECISION_MONTO);
+                        let deCalc = Utils.redondear(res.primaNeta * tasaDerechoEmision, Utils.PRECISION_MONTO);
                         res.derechoEmision = (deCalc < derechoEmisionMinimo) ? derechoEmisionMinimo : deCalc;
-                        res.primaComercial = Utils.redondear(res.primaNeta + res.derechoEmision);
-                        // Recalculate tasa comercial based on actual money ratio to be precise or keep pure rate?
-                        // User request: "Tasa neta = Tasa comercial / (1+tasa derecho de emision)" implies pure rate math.
-                        // But money rounding often deviates.
-                        // Let's keep consistent with previous money-first approach if Suma exists.
+                        res.primaComercial = Utils.redondear(res.primaNeta + res.derechoEmision, Utils.PRECISION_MONTO);
                         res.tasaComercial = res.primaComercial / sumaAsegurada;
                     }
-
                 } else if (tipoTasa === 'tasaComercial') {
                     res.tasaComercial = tasaDecimal;
-                    res.tasaNeta = res.tasaComercial / (1 + tasaDerechoEmision); // Pure rate calc
+                    res.tasaNeta = Utils.redondear(res.tasaComercial / (1 + tasaDerechoEmision), Utils.PRECISION_TASA);
 
                     if (tieneSuma) {
-                        res.primaComercial = Utils.redondear(res.tasaComercial * sumaAsegurada);
-                        let pnApprox = Utils.redondear(res.primaComercial / (1 + tasaDerechoEmision));
-                        let deCalc = Utils.redondear(pnApprox * tasaDerechoEmision);
+                        res.primaComercial = Utils.redondear(res.tasaComercial * sumaAsegurada, Utils.PRECISION_MONTO);
+                        let pnApprox = Utils.redondear(res.primaComercial / (1 + tasaDerechoEmision), Utils.PRECISION_MONTO);
+                        let deCalc = Utils.redondear(pnApprox * tasaDerechoEmision, Utils.PRECISION_MONTO);
 
                         if (deCalc < derechoEmisionMinimo) {
                             res.derechoEmision = derechoEmisionMinimo;
-                            res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision);
+                            res.primaNeta = Utils.redondear(res.primaComercial - res.derechoEmision, Utils.PRECISION_MONTO);
                         } else {
                             res.derechoEmision = deCalc;
                             res.primaNeta = pnApprox;
@@ -380,8 +382,8 @@ class CalculatorEngine {
                 }
 
                 if (tieneSuma) {
-                    res.igv = Utils.redondear(res.primaComercial * 0.18);
-                    res.primaTotal = Utils.redondear(res.primaComercial + res.igv);
+                    res.igv = Utils.redondear(res.primaComercial * 0.18, Utils.PRECISION_MONTO);
+                    res.primaTotal = Utils.redondear(res.primaComercial + res.igv, Utils.PRECISION_MONTO);
                 }
             }
         } else if (activeTab === 'prorrata' && state.headerDataValue >= 0) {
@@ -461,12 +463,24 @@ class CalculatorEngine {
         if (res.primaNeta > 0 && valorComision > 0) {
             if (tipoComision === 'porcentaje') {
                 res.comisionPorcentaje = valorComision / 100;
-                res.comisionMonto = Utils.redondear(res.comisionPorcentaje * res.primaNeta);
+                res.comisionMonto = Utils.redondear(res.comisionPorcentaje * res.primaNeta, Utils.PRECISION_MONTO);
             } else {
                 res.comisionMonto = valorComision;
                 res.comisionPorcentaje = res.comisionMonto / res.primaNeta;
             }
         }
+
+        // REDONDEO FINAL DE PRESENTACIÓN
+        res.primaNeta = Utils.redondear(res.primaNeta, Utils.PRESENTACION_MONTO);
+        res.derechoEmision = Utils.redondear(res.derechoEmision, Utils.PRESENTACION_MONTO);
+        res.primaComercial = Utils.redondear(res.primaComercial, Utils.PRESENTACION_MONTO);
+        res.igv = Utils.redondear(res.igv, Utils.PRESENTACION_MONTO);
+        res.primaTotal = Utils.redondear(res.primaTotal, Utils.PRESENTACION_MONTO);
+        res.comisionMonto = Utils.redondear(res.comisionMonto, Utils.PRESENTACION_MONTO);
+
+        // Tasas a 4 decimales (valor decimal puro)
+        res.tasaNeta = Utils.redondear(res.tasaNeta, Utils.PRESENTACION_TASA + 2); // Tasas son 0.XXXXYY
+        res.tasaComercial = Utils.redondear(res.tasaComercial, Utils.PRESENTACION_TASA + 2);
 
         return res;
     }
