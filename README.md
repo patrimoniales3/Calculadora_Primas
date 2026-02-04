@@ -116,7 +116,10 @@ Cada aseguradora establece un derecho de emisión mínimo que debe cobrarse, ind
 **MAPFRE (SOAT)**
 - Derecho de emisión porcentual: **5%**
 
-**AVLA**
+**Pacifico (SOAT)**
+- Derecho de emisión porcentual: **4%**
+
+**AVLA o CRECER**
 - Derecho de emisión porcentual: **0%**
 
 ### **Cálculo del Derecho de Emisión**

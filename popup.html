@@ -21,12 +21,16 @@
                         <input type="radio" name="inputType" value="tasa">
                         <span>Tasa</span>
                     </label>
+                    <label class="toggle-option">
+                        <input type="radio" name="inputType" value="prorrata">
+                        <span>Prorrata</span>
+                    </label>
                 </div>
                 <button id="btnLimpiar" title="Limpiar datos" class="btn-icon">🔄</button>
             </div>
             <div class="prima-inputs active">
                 <div class="input-row">
-                    <div class="input-group" style="flex:1;">
+                    <div class="input-group" style="flex:2;">
                         <label for="tipoPrima">Tipo de Prima:</label>
                         <select id="tipoPrima">
                             <option value="total">Prima Total</option>
@@ -34,38 +38,153 @@
                             <option value="neta">Prima Neta</option>
                         </select>
                     </div>
-                    <div class="input-group" style="flex:1;">
+                    <div class="input-group" style="flex:2;">
                         <label for="valorPrima" id="labelPrima">Prima:</label>
                         <input type="text" id="valorPrima" step="0.01" placeholder="0.00" autocomplete="off"
                             inputmode="decimal">
                     </div>
-                    <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
-                        <label style="font-size:11px; font-weight:400; margin:0;">
+                    <div class="input-group"
+                        style="flex:1; display:flex; flex-direction:column; justify-content:flex-end;">
+                        <label
+                            style="font-size:11px; font-weight:400; margin:0; display:flex; align-items:center; gap:2px; height:20px; justify-content:flex-end; padding-bottom:1px; cursor:pointer;">
                             <input type="checkbox" id="tasaPorMilPrima"
-                                style="width:20px;height:20px;vertical-align:middle;"> (‰)
+                                style="width:16px;height:16px;margin:0;cursor:pointer;"> ‰
                         </label>
                     </div>
                 </div>
             </div>
             <div class="tasa-inputs">
                 <div class="input-row">
-                    <div class="input-group" style="flex:1;">
+                    <div class="input-group" style="flex:2;">
                         <label for="tipoTasa">Tipo de Tasa:</label>
                         <select id="tipoTasa">
                             <option value="tasaNeta">Tasa Neta</option>
                             <option value="tasaComercial">Tasa Comercial</option>
                         </select>
                     </div>
-                    <div class="input-group" style="flex:1;">
+                    <div class="input-group" style="flex:2;">
                         <label for="valorTasa" id="labelTasa">Tasa:</label>
                         <input type="text" id="valorTasa" step="0.0001" placeholder="0.0000" autocomplete="off"
                             inputmode="decimal">
                     </div>
-                    <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
-                        <label style="font-size:11px; font-weight:400; margin:0;">
+                    <div class="input-group"
+                        style="flex:1; display:flex; flex-direction:column; justify-content:flex-end;">
+                        <label
+                            style="font-size:11px; font-weight:400; margin:0; display:flex; align-items:center; gap:2px; height:20px; justify-content:flex-end; padding-bottom:1px; cursor:pointer;">
                             <input type="checkbox" id="tasaPorMil"
-                                style="width:20px;height:20px;vertical-align:middle;"> (‰)
+                                style="width:16px;height:16px;margin:0;cursor:pointer;"> ‰
                         </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Prorrata -->
+            <div class="prorrata-inputs">
+                <!-- Fila 2: Datos de Origen (Editable) -->
+                <div class="data-header-row">
+                    <div class="select-container">
+                        <select id="headerDataType">
+                            <option value="primaNeta">Prima Neta</option>
+                            <option value="primaComercial">Prima Comercial</option>
+                            <option value="primaTotal">Prima Total</option>
+                            <option value="tasaNeta">Tasa Neta</option>
+                            <option value="tasaComercial">Tasa Comercial</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <input type="text" id="headerDataValue" value="0.00" autocomplete="off" inputmode="decimal">
+                    </div>
+                    <div class="toggle-unit">
+                        <label>
+                            <input type="checkbox" id="headerTasaPorMil"> ‰
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: POR PERIODO -->
+                <div class="section-title-bar" id="headerPeriodo" style="cursor: pointer;">
+                    <div class="title-left">
+                        <span class="toggle-arrow"></span>
+                        <span class="title-text">Por Periodo:</span>
+                    </div>
+                    <div class="unit-select-container">
+                        <button class="btn-lock" id="btnLockPeriodo" title="Bloquear/Desbloquear cálculo">🔒</button>
+                        <div class="input-group" style="margin-bottom: 0; flex: 3;">
+                            <select id="periodoUnidad">
+                                <option value="anos">Anual</option>
+                                <option value="meses">Meses</option>
+                                <option value="dias">Días</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contentPeriodo" class="collapsible-content collapsed">
+                    <div class="input-row-details">
+                        <div class="col-cant">
+                            <div class="input-group">
+                                <label>Cant.:</label>
+                                <input type="text" id="periodoValor" value="1.00" autocomplete="off" inputmode="decimal"
+                                    class="input-locked" readonly>
+                            </div>
+                        </div>
+                        <div class="col-date">
+                            <div class="input-group">
+                                <label>Inicio (dd/mm/yyyy):</label>
+                                <input type="text" id="fechaInicioPeriodo" placeholder="dd/mm/yyyy" autocomplete="off"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
+                        <div class="col-date">
+                            <div class="input-group">
+                                <label>Fin (dd/mm/yyyy):</label>
+                                <input type="text" id="fechaFinPeriodo" placeholder="dd/mm/yyyy" autocomplete="off"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: A PRORRATA -->
+                <div class="section-title-bar" id="headerProrrata" style="cursor: pointer;">
+                    <div class="title-left">
+                        <span class="toggle-arrow"></span>
+                        <span class="title-text">A Prorrata:</span>
+                    </div>
+                    <div class="unit-select-container">
+                        <button class="btn-lock" id="btnLockProrrata" title="Bloquear/Desbloquear cálculo">🔓</button>
+                        <div class="input-group" style="margin-bottom: 0; flex: 3;">
+                            <select id="prorrataUnidad">
+                                <option value="anos">Anual</option>
+                                <option value="meses">Meses</option>
+                                <option value="dias" selected>Días</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="contentProrrata" class="collapsible-content">
+                    <div class="input-row-details">
+                        <div class="col-cant">
+                            <div class="input-group">
+                                <label>Cant.:</label>
+                                <input type="text" id="prorrataValor" value="0.00" autocomplete="off"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
+                        <div class="col-date">
+                            <div class="input-group">
+                                <label>Inicio (dd/mm/yyyy):</label>
+                                <input type="text" id="fechaInicioProrrata" placeholder="dd/mm/yyyy" autocomplete="off"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
+                        <div class="col-date">
+                            <div class="input-group">
+                                <label>Fin (dd/mm/yyyy):</label>
+                                <input type="text" id="fechaFinProrrata" placeholder="dd/mm/yyyy" autocomplete="off"
+                                    inputmode="decimal">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -94,6 +213,7 @@
                     <label for="tasaDerechoEmision">Tasa Derecho Emisión:</label>
                     <select id="tasaDerechoEmision">
                         <option value="0.03" selected>3%</option>
+                        <option value="0.04">4%</option>
                         <option value="0.05">5%</option>
                         <option value="0">0%</option>
                     </select>
