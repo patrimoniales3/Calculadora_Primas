@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Primas</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <div class="container">        
+    <div class="container">
         <div class="section">
             <div class="section-header">
                 <div class="toggle-group">
@@ -28,17 +30,19 @@
                         <label for="tipoPrima">Tipo de Prima:</label>
                         <select id="tipoPrima">
                             <option value="total">Prima Total</option>
-                                <option value="comercial">Prima Comercial</option>
-                                <option value="neta">Prima Neta</option>
+                            <option value="comercial">Prima Comercial</option>
+                            <option value="neta">Prima Neta</option>
                         </select>
                     </div>
                     <div class="input-group" style="flex:1;">
-                        <label for="valorPrima" id="labelPrima">Prima Total:</label>
-                        <input type="text" id="valorPrima" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                        <label for="valorPrima" id="labelPrima">Prima:</label>
+                        <input type="text" id="valorPrima" step="0.01" placeholder="0.00" autocomplete="off"
+                            inputmode="decimal">
                     </div>
                     <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
                         <label style="font-size:11px; font-weight:400; margin:0;">
-                            <input type="checkbox" id="tasaPorMilPrima" style="width:20px;height:20px;vertical-align:middle;"> (‰)
+                            <input type="checkbox" id="tasaPorMilPrima"
+                                style="width:20px;height:20px;vertical-align:middle;"> (‰)
                         </label>
                     </div>
                 </div>
@@ -54,11 +58,13 @@
                     </div>
                     <div class="input-group" style="flex:1;">
                         <label for="valorTasa" id="labelTasa">Tasa:</label>
-                        <input type="text" id="valorTasa" step="0.0001" placeholder="0.0000" autocomplete="off" inputmode="decimal">
+                        <input type="text" id="valorTasa" step="0.0001" placeholder="0.0000" autocomplete="off"
+                            inputmode="decimal">
                     </div>
                     <div class="input-group" style="flex:0;align-items:end;justify-content:end;">
                         <label style="font-size:11px; font-weight:400; margin:0;">
-                            <input type="checkbox" id="tasaPorMil" style="width:20px;height:20px;vertical-align:middle;"> (‰)
+                            <input type="checkbox" id="tasaPorMil"
+                                style="width:20px;height:20px;vertical-align:middle;"> (‰)
                         </label>
                     </div>
                 </div>
@@ -66,7 +72,8 @@
             <div class="input-row">
                 <div class="input-group" style="flex:1;">
                     <label for="sumaAsegurada">Suma Asegurada:</label>
-                    <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                    <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off"
+                        inputmode="decimal">
                 </div>
             </div>
             <div class="input-row">
@@ -92,8 +99,9 @@
                     </select>
                 </div>
                 <div class="input-group" style="flex:1;">
-                    <label for="derechoEmisionMinimo">Derecho Emisión Mín.:</label>
-                    <input type="text" id="derechoEmisionMinimo" value="0.00" style="width:100%;" autocomplete="off" inputmode="decimal">
+                    <label for="derechoEmisionMinimo">Mín. Derecho Emisión:</label>
+                    <input type="text" id="derechoEmisionMinimo" value="0.00" style="width:100%;" autocomplete="off"
+                        inputmode="decimal">
                 </div>
             </div>
         </div>
@@ -133,7 +141,8 @@
             </div>
         </div>
     </div>
-    
+
     <script src="popup.js"></script>
 </body>
+
 </html>
