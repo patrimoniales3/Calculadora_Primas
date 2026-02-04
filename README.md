@@ -97,6 +97,12 @@ Puedes ingresar la comisión de dos formas:
 
 El resultado se invierte automáticamente según el tipo seleccionado.
 
+#### **Modo Prorrata (A Prorrata)**
+- Permite calcular primas para periodos menores a un año (ej. endosos temporales, devoluciones).
+- **Cabecera Dinámica**: Puedes elegir qué valor prorratear (Prima Total, Prima Neta, Tasa, etc.).
+- **Lógica de Fechas**: Calcula automáticamente los días transcurridos entre dos fechas y los compara con el periodo total (usualmente 365 días).
+- **Sincronización**: El resultado prorrateado se envía automáticamente a las pestañas de Prima o Tasa para completar el cálculo de impuestos y comisiones.
+
 ---
 
 ## 💰 Derechos de emisión
@@ -229,13 +235,28 @@ El derecho de emisión se calcula de la siguiente manera:
 
 **Resultado**: Prima comercial = Prima neta (sin añadir derecho)
 
+### Caso 5: Devolución de Prima (Quálitas)
+
+**Escenario**: Quálitas suele no considerar el derecho de emisión en las devoluciones de prima.
+
+1. Seleccionar pestaña **Prorrata**
+2. En la cabecera, seleccionar el tipo de valor que se va a devolver (ej: Prima Neta)
+3. En la sección de **Derecho de Emisión**:
+   - Tasa Derecho Emisión: **0%**
+   - Derecho Emisión Mínimo: **0.00**
+4. Ingresar las fechas de vigencia y de anulación para obtener el monto a devolver exacto.
+
+**Resultado**: El cálculo de devolución se realizará exclusivamente sobre la base de la prima, sin retener o devolver derechos de emisión según la política de la aseguradora.
+
 ---
 
 ## 🔧 Características técnicas
 
 - **Tecnología**: Extensión de Chrome (Manifest V3)
 - **Almacenamiento**: localStorage del navegador
-- **Precisión**: Redondeo a 2 decimales para montos, 4 para tasas
+- **Precisión**: 
+  - **Montos**: Redondeo final a 2 decimales (Precisión interna de 6 decimales para evitar errores acumulados).
+  - **Tasas**: Redondeo final a 4 decimales (Precisión interna de 8 decimales).
 - **Formato**: Números en formato local (es-PE con miles separados por coma)
 - **Sincronización**: Los datos se guardan automáticamente con cada cambio
 - **Compatibilidad**: Chrome, Edge, Brave y otros navegadores basados en Chromium
