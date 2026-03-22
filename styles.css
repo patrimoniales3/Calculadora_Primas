@@ -258,15 +258,15 @@ button:active {
     background: #e8e8e8;
     padding: 2px;
     border-radius: 6px;
-    max-width: 140px;
+    max-width: 260px;
 }
 
 .toggle-option {
     flex: 1;
     text-align: center;
-    font-size: 11px;
+    font-size: 10px;
     cursor: pointer;
-    padding: 3px 6px;
+    padding: 3px 4px;
     color: #666;
     border-radius: 3px;
     user-select: none;
@@ -571,3 +571,128 @@ button:active {
     display: block;
     animation: fadeIn 0.2s ease-in-out;
 }
+
+/* =========================================
+   Estilos de Presets
+   ========================================= */
+.presets-inputs {
+    display: none;
+}
+.presets-inputs.active {
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.presets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.preset-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    transition: transform 0.1s, border-color 0.2s;
+}
+.preset-card:hover { border-color: #2e7d32; }
+
+.preset-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preset-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #333;
+}
+
+.preset-apply-btn {
+    width: 24px;
+    height: 24px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+.preset-apply-btn:hover { background: #c8e6c9; color: #1b5e20; }
+.preset-apply-btn:active { transform: scale(1.2); }
+
+.preset-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.preset-tag {
+    background: #f1f1f1;
+    color: #555;
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+.preset-tag.highlight {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.preset-desc-wrapper {
+    display: flex;
+    gap: 4px;
+    align-items: flex-start;
+}
+
+.preset-desc {
+    flex: 1;
+    font-size: 10px;
+    color: #666;
+    line-height: 1.3;
+    display: -webkit-box;
+    line-clamp: 1;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.preset-desc.expanded {
+    line-clamp: unset;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+
+.preset-expand-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+.preset-expand-btn:hover { 
+    color: #333;
+    background-color: #f1f1f1;
+}
+.preset-expand-btn:active { transform: scale(1.4); }

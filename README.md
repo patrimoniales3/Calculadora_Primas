@@ -103,6 +103,26 @@ El resultado se invierte automáticamente según el tipo seleccionado.
 - **Lógica de Fechas**: Calcula automáticamente los días transcurridos entre dos fechas y los compara con el periodo total (usualmente 365 días).
 - **Sincronización**: El resultado prorrateado se envía automáticamente a las pestañas de Prima o Tasa para completar el cálculo de impuestos y comisiones.
 
+### 5. **Pestaña de Presets (Configuraciones Rápidas)**
+
+Nueva sección para cargar configuraciones predefinidas de aseguradoras y productos específicos:
+
+- **Buscador Inteligente**: Filtra por nombre de compañía, descripción o valores específicos (ej: "18.00" o "Comisión").
+- **Tipos de Presets**:
+  - **Derechos de Emisión**: Carga automática de mínimos y tasas para La Positiva, MAPFRE, Pacífico, AVLA, Crecer, etc.
+  - **Comisiones por Producto**: Configura automáticamente el % de comisión para productos como "AUTO TOTAL", "SMART PROVINCIA", "WEB Qualitas", entre otros.
+- **Acción Rápida**: El botón de aplicar (✅) carga los valores y te redirige automáticamente a la sección correspondiente para visualizar el resultado.
+
+### 6. **Soporte para Valores Negativos**
+
+- Ideal para calcular **devoluciones o anulaciones parciales**.
+- Puedes ingresar valores negativos (ej: `-150.40`) y la calculadora procesará el cálculo manteniendo la integridad matemática de los impuestos y derechos de emisión.
+
+### 7. **Interfaz Dinámica (Auto-escalado)**
+
+- La calculadora ajusta su tamaño y **zoom visual** automáticamente según la resolución de tu pantalla.
+- Optimización especial para monitores de alta resolución (`1080p`, `1440p`, etc.) para que la interfaz nunca se vea demasiado pequeña o difícil de leer.
+
 ---
 
 ## 💰 Derechos de emisión

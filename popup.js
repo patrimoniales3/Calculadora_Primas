@@ -262,7 +262,7 @@ class StateManager {
 // ==========================================
 class CalculatorEngine {
     static calculate(state) {
-        const {
+        let {
             sumaAsegurada,
             activeTab,
             tipoPrima, valorPrima,
@@ -285,6 +285,18 @@ class CalculatorEngine {
             isValid: false
         };
 
+        let isNegative = false;
+        if (activeTab === 'prima' && valorPrima < 0) {
+            isNegative = true;
+            valorPrima = Math.abs(valorPrima);
+        } else if (activeTab === 'tasa' && valorTasa < 0) {
+            isNegative = true;
+            valorTasa = Math.abs(valorTasa);
+        } else if (activeTab === 'prorrata' && state.headerDataValue < 0) {
+            isNegative = true;
+            state = { ...state, headerDataValue: Math.abs(state.headerDataValue) };
+        }
+
         // Lógica de Limpieza Total: Si no hay valor base, todo debe ser 0.
         const baseVal = activeTab === 'prorrata' ? state.headerDataValue : (activeTab === 'tasa' ? valorTasa : valorPrima);
         if (baseVal === 0 && sumaAsegurada === 0) { // Added sumaAsegurada check for full reset
@@ -296,7 +308,7 @@ class CalculatorEngine {
         const tieneSuma = sumaAsegurada > 0;
 
         if (activeTab === 'prima') {
-            if (valorPrima > 0 || sumaAsegurada > 0) {
+            if (valorPrima !== 0 || sumaAsegurada > 0) {
                 res.isValid = true;
 
                 if (tipoPrima === 'total') {
@@ -346,7 +358,7 @@ class CalculatorEngine {
                 }
             }
         } else if (activeTab === 'tasa') {
-            if (valorTasa > 0) {
+            if (valorTasa !== 0) {
                 res.isValid = true;
                 let tasaDecimal = tasaPorMil ? valorTasa / 1000 : valorTasa / 100;
 
@@ -470,6 +482,17 @@ class CalculatorEngine {
             }
         }
 
+        if (isNegative) {
+            res.primaNeta *= -1;
+            res.derechoEmision *= -1;
+            res.primaComercial *= -1;
+            res.igv *= -1;
+            res.primaTotal *= -1;
+            res.comisionMonto *= -1;
+            res.tasaNeta *= -1;
+            res.tasaComercial *= -1;
+        }
+
         // REDONDEO FINAL DE PRESENTACIÓN
         res.primaNeta = Utils.redondear(res.primaNeta, Utils.PRESENTACION_MONTO);
         res.derechoEmision = Utils.redondear(res.derechoEmision, Utils.PRESENTACION_MONTO);
@@ -505,7 +528,8 @@ class UIController {
             tabContainers: {
                 prima: document.querySelector('.prima-inputs'),
                 tasa: document.querySelector('.tasa-inputs'),
-                prorrata: document.querySelector('.prorrata-inputs')
+                prorrata: document.querySelector('.prorrata-inputs'),
+                presets: document.querySelector('.presets-inputs')
             },
 
             // Shared Inputs
@@ -545,9 +569,12 @@ class UIController {
     }
 
     init() {
+        this.ajustarAltoMaximo();
         this.loadStateToUI();
         this.attachListeners();
         this.updateTabVisibility(this.sm.get('activeTab'));
+
+        this.presetsManager = new PresetsManager(this);
 
         // Inicializar Header Prorrata en Prima Neta por defecto
         const headerType = document.getElementById('headerDataType');
@@ -574,6 +601,31 @@ class UIController {
             valProrrata.removeAttribute('readonly');
             valProrrata.classList.remove('input-locked');
         }
+    }
+
+    ajustarAltoMaximo() {
+        // Ecuación para el porcentaje del alto máximo a ocupar en la pantalla
+        // 768p -> ~79.3%
+        // 1440p -> ~50.0%
+        const container = document.querySelector('.container');
+        if (!container) return;
+
+        const screenH = window.screen.height || window.innerHeight;
+        let porcentaje = 79.296875 - ((79.296875 - 50) / (1440 - 768)) * (screenH - 768);
+
+        // Limites para resoluciones extremas
+        if (porcentaje < 50) porcentaje = 50;
+        if (porcentaje > 95) porcentaje = 95;
+
+        const targetHeightPx = (screenH * porcentaje) / 100;
+        container.style.maxHeight = targetHeightPx + 'px';
+
+        // Escalar la interfaz mediante zoom para que no quede vacía al maximizar "alto máximo".
+        // La interfaz en su modo más largo (prorrata) tiene un alto natural de 609px.
+        const baseHeight = 609;
+        const zoomFactor = targetHeightPx / baseHeight;
+        
+        container.style.zoom = zoomFactor;
     }
 
     loadStateToUI() {
@@ -1134,6 +1186,17 @@ class UIController {
                 else container.classList.remove('active');
             }
         });
+
+        // Ocultar elementos genéricos y tabla de resultados si estamos en Presets
+        const commonInputs = document.getElementById('commonInputs');
+        const resultGrid = document.getElementById('resultGrid');
+        
+        if (commonInputs) {
+            commonInputs.style.display = (activeTab === 'presets') ? 'none' : 'block';
+        }
+        if (resultGrid) {
+            resultGrid.style.display = (activeTab === 'presets') ? 'none' : 'grid';
+        }
     }
 
     updateComisionLabel() {
@@ -1311,6 +1374,226 @@ class UIController {
         } else {
             e.resValComision.textContent = isWarning ? '0.00%' : (res.comisionPorcentaje * 100).toFixed(2) + '%';
         }
+    }
+}
+
+// ==========================================
+// PRESETS DATA & MANAGER
+// ==========================================
+const PresetsData = [
+    {
+        id: "la_positiva_soles",
+        name: "La Positiva (Soles)",
+        description: "Aplica derecho de emisión mínimo para operaciones de La Positiva en Soles.",
+        changes: {
+            derechoEmisionMinimo: 18.00
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "la_positiva_dolares",
+        name: "La Positiva (Dólares)",
+        description: "Aplica derecho de emisión mínimo para operaciones de La Positiva en Dólares.",
+        changes: {
+            derechoEmisionMinimo: 5.00
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "mapfre_soat",
+        name: "MAPFRE (SOAT)",
+        description: "Ajuste de derecho de emisión porcentual para SOAT.",
+        changes: {
+            tasaDerechoEmision: 0.05
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "pacifico_soat",
+        name: "Pacifico (SOAT)",
+        description: "Ajuste de derecho de emisión porcentual para SOAT.",
+        changes: {
+            tasaDerechoEmision: 0.04
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "avla",
+        name: "AVLA",
+        description: "Ajuste de derecho de emisión porcentual.",
+        changes: {
+            tasaDerechoEmision: 0.00
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "crecer",
+        name: "CRECER",
+        description: "Ajuste de derecho de emisión porcentual.",
+        changes: {
+            tasaDerechoEmision: 0.00
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    {
+        id: "devolucion_qualitas",
+        name: "Devolución de Qualitas",
+        description: "Ajuste de derecho de emisión porcentual.",
+        changes: {
+            tasaDerechoEmision: 0.00
+        },
+        sections: ["prima", "tasa", "prorrata"]
+    },
+    // Nuevos Presets de Comisión
+    { id: "com_auto_total", name: "Producto AUTO TOTAL", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 18 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_auto_premium", name: "Producto AUTO PREMIUM", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 18 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_auto_comercial", name: "Producto AUTO COMERCIAL", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 15 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_auto_carga", name: "Producto AUTO CARGA", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 17 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_multiriesgo", name: "Producto MULTIRIESGO", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 13.50 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_corp_domiciliario", name: "Producto CORPORATIVO DOMICILIARIO", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 16.50 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_smart_provincia", name: "Producto SMART PROVINCIA", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 20 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_web_qualitas", name: "Producto WEB Qualitas", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 23 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_corp_qualitas", name: "Producto Corporativo Qualitas", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 20 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_slip_qualitas", name: "Producto Slip Qualitas", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 17.50 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_mapfre_dorada", name: "Producto Mapfre Premium Dorada (Livianos)", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 17.50 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_mapfre_carga", name: "Producto Mapfre Premium Carga (Camiones)", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 15 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_mapfre_moto", name: "Producto Mapfre Soat Moto", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 7.50 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_mapfre_soat", name: "Producto Mapfre Soat", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 15 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_pacifico_trans", name: "Producto Pacifico Transporte", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 13 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_positiva_car", name: "Producto La Positiva CAR", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 16 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_positiva_corp_car", name: "Producto La Positiva Corporativo CAR", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 15 }, sections: ["prima", "tasa", "prorrata"] },
+    { id: "com_positiva_dimarza", name: "Producto La Positiva Dimarza SOAT", description: "Ajuste automático de comisión.", changes: { tipoComision: "porcentaje", valorComision: 15 }, sections: ["prima", "tasa", "prorrata"] }
+];
+
+class PresetsManager {
+    constructor(uiController) {
+        this.ui = uiController;
+        this.sm = uiController.sm;
+        this.listContainer = document.getElementById('presetsList');
+        this.searchInput = document.getElementById('presetSearch');
+        
+        this.init();
+    }
+
+    init() {
+        if (!this.listContainer) return;
+        this.renderCards(PresetsData);
+        this.attachSearchListener();
+    }
+
+    getPropName(key) {
+        const names = {
+            derechoEmisionMinimo: "Mín. Derecho Emisión",
+            tasaDerechoEmision: "Tasa Derecho Emisión",
+            valorComision: "Comisión",
+            tipoComision: "Tipo Comisión"
+        };
+        return names[key] || key;
+    }
+
+    formatValue(key, value, changesObj) {
+        if (key === 'tasaDerechoEmision') {
+            return (value * 100) + '%';
+        }
+        if (key === 'derechoEmisionMinimo') {
+            return Utils.formatearNumero(value);
+        }
+        if (key === 'tipoComision') {
+            return value === 'porcentaje' ? '%' : 'Monto';
+        }
+        if (key === 'valorComision') {
+            return (changesObj && changesObj.tipoComision === 'porcentaje') ? value + '%' : Utils.formatearNumero(value);
+        }
+        return value;
+    }
+
+    renderCards(data) {
+        this.listContainer.innerHTML = '';
+        
+        data.forEach(preset => {
+            preset.sections.forEach(section => {
+                const card = document.createElement('div');
+                card.className = 'preset-card';
+                
+                const sectionName = section.charAt(0).toUpperCase() + section.slice(1);
+                
+                let tagsHtml = '';
+                let searchableProps = '';
+                for (let key in preset.changes) {
+                    // Evitamos duplicar la visualización del "Tipo Comisión" redundante si acompañamos su % en Valor Comisión
+                    if (key === 'tipoComision') continue; 
+
+                    const propName = this.getPropName(key);
+                    const formattedVal = this.formatValue(key, preset.changes[key], preset.changes);
+                    tagsHtml += `<span class="preset-tag highlight">${propName}: ${formattedVal}</span>`;
+                    searchableProps += `${propName} ${formattedVal} `;
+                }
+
+                card.dataset.search = `${preset.name} ${preset.description} ${searchableProps} ${section}`.toLowerCase();
+                
+                card.innerHTML = `
+                    <div class="preset-card-header">
+                        <span class="preset-title">${preset.name} - ${sectionName}</span>
+                        <button class="preset-apply-btn" title="Aplicar y visualizar">✅</button>
+                    </div>
+                    <div class="preset-tags">
+                        ${tagsHtml}
+                    </div>
+                    ${preset.description ? `
+                    <div class="preset-desc-wrapper">
+                        <span class="preset-desc">${preset.description}</span>
+                        <button class="preset-expand-btn" title="Expandir/Contraer">▼</button>
+                    </div>` : ''}
+                `;
+
+                const applyBtn = card.querySelector('.preset-apply-btn');
+                applyBtn.addEventListener('click', () => {
+                    this.applyPreset(preset.changes, section);
+                });
+
+                const expandBtn = card.querySelector('.preset-expand-btn');
+                if (expandBtn) {
+                    const descEl = card.querySelector('.preset-desc');
+                    expandBtn.addEventListener('click', () => {
+                        descEl.classList.toggle('expanded');
+                        expandBtn.textContent = descEl.classList.contains('expanded') ? '▲' : '▼';
+                    });
+                }
+
+                this.listContainer.appendChild(card);
+            });
+        });
+    }
+
+    attachSearchListener() {
+        if (!this.searchInput) return;
+        this.searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const cards = this.listContainer.querySelectorAll('.preset-card');
+            cards.forEach(card => {
+                if (card.dataset.search.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    applyPreset(changes, section) {
+        for (let key in changes) {
+            this.sm.update(key, changes[key]);
+        }
+        
+        const targetRadio = document.querySelector(`input[name="inputType"][value="${section}"]`);
+        if (targetRadio) {
+            targetRadio.checked = true;
+            this.sm.update('activeTab', section);
+            this.ui.updateTabVisibility(section);
+        }
+
+        this.ui.loadStateToUI();
+        this.ui.recalculate();
     }
 }
 

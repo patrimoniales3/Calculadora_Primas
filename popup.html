@@ -14,6 +14,10 @@
             <div class="section-header">
                 <div class="toggle-group">
                     <label class="toggle-option">
+                        <input type="radio" name="inputType" value="presets">
+                        <span>Presets</span>
+                    </label>
+                    <label class="toggle-option">
                         <input type="radio" name="inputType" value="prima" checked>
                         <span>Prima</span>
                     </label>
@@ -188,46 +192,61 @@
                     </div>
                 </div>
             </div>
-            <div class="input-row">
-                <div class="input-group" style="flex:1;">
-                    <label for="sumaAsegurada">Suma Asegurada:</label>
-                    <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off"
-                        inputmode="decimal">
+
+            <!-- Sección Presets -->
+            <div class="presets-inputs">
+                <div class="preset-search-container" style="margin-bottom: 8px;">
+                    <div class="input-group">
+                        <input type="text" id="presetSearch" placeholder="Buscar por nombre, atributo o descripción..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="presetsList" class="presets-list">
+                    <!-- Las tarjetas de presets se inyectan a través de popup.js -->
                 </div>
             </div>
-            <div class="input-row">
-                <div class="input-group" style="flex:1;">
-                    <label for="tipoComision">Tipo de Comisión:</label>
-                    <select id="tipoComision">
-                        <option value="monto">Comisión</option>
-                        <option value="porcentaje">% Comisión</option>
-                    </select>
+            
+            <!-- Contenedor de Inputs Comunes (Suma, Comisión, Tasa/Min Derecho) -->
+            <div id="commonInputs">
+                <div class="input-row">
+                    <div class="input-group" style="flex:1;">
+                        <label for="sumaAsegurada">Suma Asegurada:</label>
+                        <input type="text" id="sumaAsegurada" step="0.01" placeholder="0.00" autocomplete="off"
+                            inputmode="decimal">
+                    </div>
                 </div>
-                <div class="input-group" style="flex:1;">
-                    <label for="valorComision" id="labelComision">Comisión:</label>
-                    <input type="text" id="valorComision" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                <div class="input-row">
+                    <div class="input-group" style="flex:1;">
+                        <label for="tipoComision">Tipo de Comisión:</label>
+                        <select id="tipoComision">
+                            <option value="monto">Comisión</option>
+                            <option value="porcentaje">% Comisión</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label for="valorComision" id="labelComision">Comisión:</label>
+                        <input type="text" id="valorComision" placeholder="0.00" autocomplete="off" inputmode="decimal">
+                    </div>
                 </div>
-            </div>
-            <div class="input-row">
-                <div class="input-group" style="flex:1;">
-                    <label for="tasaDerechoEmision">Tasa Derecho Emisión:</label>
-                    <select id="tasaDerechoEmision">
-                        <option value="0.03" selected>3%</option>
-                        <option value="0.04">4%</option>
-                        <option value="0.04">4%</option>
-                        <option value="0.05">5%</option>
-                        <option value="0">0%</option>
-                    </select>
-                </div>
-                <div class="input-group" style="flex:1;">
-                    <label for="derechoEmisionMinimo">Mín. Derecho Emisión:</label>
-                    <input type="text" id="derechoEmisionMinimo" value="0.00" style="width:100%;" autocomplete="off"
-                        inputmode="decimal">
+                <div class="input-row">
+                    <div class="input-group" style="flex:1;">
+                        <label for="tasaDerechoEmision">Tasa Derecho Emisión:</label>
+                        <select id="tasaDerechoEmision">
+                            <option value="0.03" selected>3%</option>
+                            <option value="0.04">4%</option>
+                            <option value="0.05">5%</option>
+                            <option value="0">0%</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label for="derechoEmisionMinimo">Mín. Derecho Emisión:</label>
+                        <input type="text" id="derechoEmisionMinimo" value="0.00" style="width:100%;" autocomplete="off"
+                            inputmode="decimal">
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="result-grid">
+        <div class="result-grid" id="resultGrid">
             <div class="result-item">
                 <label>Tasa Neta:</label>
                 <span id="tasaNeta">0.0000%</span>
@@ -249,11 +268,11 @@
                 <span id="primaComercial">0.00</span>
             </div>
             <div class="result-item">
-                <label>IGV:</label>
+                <label>IGV (18%):</label>
                 <span id="igv">0.00</span>
             </div>
             <div class="result-item">
-                <label>Prima Total:</label>
+                <label>Prima Total (Pt):</label>
                 <span id="primaTotalCalculada">0.00</span>
             </div>
             <div class="result-item">
